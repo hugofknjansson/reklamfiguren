@@ -6,3 +6,10 @@ En 3D-figur där företag budar på reklamytor på tröjan och byxorna. Det leda
 - Buden sparas i Supabase-tabellen `public.reklamfiguren_bud`. Alla besökare kan läsa och lägga bud, men ingen kan ändra eller ta bort dem. Bud under utropspriset eller minsta höjning stoppas av databasen.
 - Auktionen stänger 30 november 2026 kl. 20:00. Datumet finns både i `index.html` och i databasfunktionen `reklamfiguren_validera_bud`.
 - Ta bort ett oönskat bud i Supabase under Table Editor → `reklamfiguren_bud`.
+
+## Figuren
+
+Figuren byggs med `node tools/build-human.mjs`, som skriver `figure.bin.gz`.
+
+- Kroppen, ansiktet, skelettet och ögonen kommer från [MakeHuman](https://github.com/makehumancommunity/makehuman) och är licensierade CC0 (se `vendor/makehuman/LICENSE.ASSETS.md`).
+- Kläder, skor och hår genereras av skripten i `tools/mh/` utifrån kroppens form.
