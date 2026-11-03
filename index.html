@@ -77,6 +77,7 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); fon
 .stage canvas { display: block; width: 100%; height: 100%; cursor: grab; outline: none }
 .stage canvas:active { cursor: grabbing }
 .stage canvas.hover { cursor: pointer }
+.loading { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; font-size: 13px; color: var(--muted); padding: 8px 14px; border-radius: 999px }
 .stage .floor { position: absolute; left: 50%; bottom: 7%; width: min(70%, 520px); aspect-ratio: 4 / 1; transform: translateX(-50%);
   background: radial-gradient(closest-side, var(--floor), transparent); pointer-events: none; z-index: 0 }
 .stage .hud { position: absolute; left: 14px; right: 14px; top: 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; pointer-events: none }
@@ -197,6 +198,7 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
   <main class="layout">
     <section class="stage" id="stage" aria-label="3D-figur med reklamytor">
       <div class="floor"></div>
+      <div class="loading glass" id="fig-loading">Laddar figuren…</div>
       <div class="hud">
         <span class="hint glass">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12a9 9 0 0 1 15.5-6.2"/><path d="M18.5 2v4h-4"/><path d="M5.5 22v-4h4"/></svg>
@@ -250,20 +252,21 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/geometries/DecalGeometry.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
 const PI = Math.PI;
 const SPOTS = [
-  { id: 'brost',    name: 'Bröst',           garment: 'Tröja', size: '30 × 20 cm', start: 5000, part: 'torso', y0: 1.20, y1: 1.35, tc: 0,        tl: 1.2 },
-  { id: 'mage',     name: 'Mage',            garment: 'Tröja', size: '30 × 14 cm', start: 2500, part: 'torso', y0: 0.99, y1: 1.13, tc: 0,        tl: 1.15 },
-  { id: 'rygg',     name: 'Rygg',            garment: 'Tröja', size: '34 × 30 cm', start: 4000, part: 'torso', y0: 1.03, y1: 1.35, tc: PI,       tl: 1.55 },
-  { id: 'arm-v',    name: 'Vänster ärm',     garment: 'Tröja', size: '10 × 18 cm', start: 1500, part: 'armL',  y0: -0.135, y1: -0.035, tc: PI / 2, tl: 1.5 },
-  { id: 'arm-h',    name: 'Höger ärm',       garment: 'Tröja', size: '10 × 18 cm', start: 1500, part: 'armR',  y0: -0.135, y1: -0.035, tc: -PI / 2, tl: 1.5 },
-  { id: 'lar-v',    name: 'Vänster lår',     garment: 'Byxor', size: '12 × 22 cm', start: 2000, part: 'legL',  y0: 0.56, y1: 0.74, tc: 0.05,     tl: 1.1 },
-  { id: 'lar-h',    name: 'Höger lår',       garment: 'Byxor', size: '12 × 22 cm', start: 2000, part: 'legR',  y0: 0.56, y1: 0.74, tc: -0.05,    tl: 1.1 },
-  { id: 'ben-v',    name: 'Vänster smalben', garment: 'Byxor', size: '10 × 20 cm', start: 1000, part: 'legL',  y0: 0.17, y1: 0.36, tc: 0.1,      tl: 1.4 },
-  { id: 'ben-h',    name: 'Höger smalben',   garment: 'Byxor', size: '10 × 20 cm', start: 1000, part: 'legR',  y0: 0.17, y1: 0.36, tc: -0.1,     tl: 1.4 },
-  { id: 'bakficka', name: 'Bakficka',        garment: 'Byxor', size: '14 × 12 cm', start: 1200, part: 'hips',  y0: 0.80, y1: 0.89, tc: PI - 0.5, tl: 0.8 },
+  { id: 'brost',    name: 'Bröst',           garment: 'Tröja', size: '30 × 20 cm', start: 5000, layer: 'shirt', o: [0, 1.27, 1],         d: [0, 0, -1], w: 0.24,  h: 0.15, depth: 0.1,  tc: 0 },
+  { id: 'mage',     name: 'Mage',            garment: 'Tröja', size: '30 × 14 cm', start: 2500, layer: 'shirt', o: [0, 1.05, 1],         d: [0, 0, -1], w: 0.22,  h: 0.12, depth: 0.1,  tc: 0 },
+  { id: 'rygg',     name: 'Rygg',            garment: 'Tröja', size: '34 × 30 cm', start: 4000, layer: 'shirt', o: [0, 1.2, -1],         d: [0, 0, 1],  w: 0.27,  h: 0.24, depth: 0.1,  tc: PI },
+  { id: 'arm-v',    name: 'Vänster ärm',     garment: 'Tröja', size: '10 × 18 cm', start: 1500, layer: 'shirt', o: [1, 1.322, -0.008],   d: [-1, 0, 0], w: 0.07,  h: 0.09, depth: 0.06, tc: PI / 2 },
+  { id: 'arm-h',    name: 'Höger ärm',       garment: 'Tröja', size: '10 × 18 cm', start: 1500, layer: 'shirt', o: [-1, 1.322, -0.008],  d: [1, 0, 0],  w: 0.07,  h: 0.09, depth: 0.06, tc: -PI / 2 },
+  { id: 'lar-v',    name: 'Vänster lår',     garment: 'Byxor', size: '12 × 22 cm', start: 2000, layer: 'pants', o: [0.098, 0.65, 1],     d: [0, 0, -1], w: 0.09,  h: 0.15, depth: 0.08, tc: 0.05 },
+  { id: 'lar-h',    name: 'Höger lår',       garment: 'Byxor', size: '12 × 22 cm', start: 2000, layer: 'pants', o: [-0.098, 0.65, 1],    d: [0, 0, -1], w: 0.09,  h: 0.15, depth: 0.08, tc: -0.05 },
+  { id: 'ben-v',    name: 'Vänster smalben', garment: 'Byxor', size: '10 × 20 cm', start: 1000, layer: 'pants', o: [0.103, 0.27, 1],     d: [0, 0, -1], w: 0.075, h: 0.13, depth: 0.07, tc: 0.1 },
+  { id: 'ben-h',    name: 'Höger smalben',   garment: 'Byxor', size: '10 × 20 cm', start: 1000, layer: 'pants', o: [-0.103, 0.27, 1],    d: [0, 0, -1], w: 0.075, h: 0.13, depth: 0.07, tc: -0.1 },
+  { id: 'bakficka', name: 'Bakficka',        garment: 'Byxor', size: '14 × 12 cm', start: 1200, layer: 'pants', o: [0.075, 0.845, -1],   d: [0, 0, 1],  w: 0.09,  h: 0.075, depth: 0.06, tc: PI - 0.4 },
 ];
 const kr = n => Math.round(n).toLocaleString('sv-SE') + ' kr';
 
@@ -316,14 +319,14 @@ window.Fig = (() => {
     }
     g.lineWidth = 1.2;
     if (kind === 'denim') {
-      for (let k = -256; k < 256; k += 4) { g.strokeStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '0,0,0'},.35)`; g.beginPath(); g.moveTo(k, 256); g.lineTo(k + 256, 0); g.stroke(); }
+      for (let k = -256; k < 256; k += 4) { g.strokeStyle = `rgba(${((((k + 512) % 256) / 4) * 37) % 11 < 5 ? '255,255,255' : '0,0,0'},.3)`; g.beginPath(); g.moveTo(k, 256); g.lineTo(k + 256, 0); g.stroke(); }
     } else if (kind === 'knit') {
       for (let y = 0; y < 256; y += 4) for (let x = 0; x < 256; x += 4) {
         g.strokeStyle = 'rgba(255,255,255,.28)'; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 2, y + 3); g.lineTo(x + 4, y); g.stroke();
       }
     }
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.repeat.set(kind === 'hair' ? 2 : kind === 'denim' ? 18 : 10, kind === 'hair' ? 2 : kind === 'denim' ? 12 : 6); t.anisotropy = 4;
+    t.repeat.set(kind === 'hair' ? 25 : 10, kind === 'hair' ? 25 : 10); t.anisotropy = 4;
     return t;
   }
   const knit = fabricMap('knit'), denim = fabricMap('denim'), strands = fabricMap('hair');
@@ -331,142 +334,80 @@ window.Fig = (() => {
   const shirt = new THREE.MeshPhysicalMaterial({ color: 0xf1f0eb, roughness: 0.92, sheen: 0.6, sheenRoughness: 0.8, sheenColor: 0xffffff,
     bumpMap: knit, bumpScale: 0.012, side: THREE.DoubleSide });
   const pants = new THREE.MeshPhysicalMaterial({ color: 0x24324d, roughness: 0.88, sheen: 0.5, sheenRoughness: 0.7, sheenColor: 0x6b82b3,
-    bumpMap: denim, bumpScale: 0.007, side: THREE.DoubleSide });
+    bumpMap: denim, bumpScale: 0.004, side: THREE.DoubleSide });
   const skin = new THREE.MeshPhysicalMaterial({ color: 0xd59d7c, roughness: 0.55, sheen: 0.35, sheenRoughness: 0.5, sheenColor: 0xff9f86, clearcoat: 0.04 });
   const lipMat = new THREE.MeshPhysicalMaterial({ color: 0xb06a62, roughness: 0.4, clearcoat: 0.2 });
   const hair = new THREE.MeshStandardMaterial({ color: 0x2c1d13, roughness: 0.75, bumpMap: strands, bumpScale: 0.02 });
   const shoeMat = new THREE.MeshPhysicalMaterial({ color: 0x2a2c31, roughness: 0.55, clearcoat: 0.3 });
   const soleMat = new THREE.MeshStandardMaterial({ color: 0xeeeeea, roughness: 0.7 });
-  const eyeWhite = new THREE.MeshPhysicalMaterial({ color: 0xf2eee8, roughness: 0.15, clearcoat: 1 });
+  const eyeWhite = new THREE.MeshPhysicalMaterial({ color: 0xe6ded5, roughness: 0.15, clearcoat: 1 });
   const irisMat = new THREE.MeshPhysicalMaterial({ color: 0x4a3222, roughness: 0.1, clearcoat: 1 });
   const beltMat = new THREE.MeshPhysicalMaterial({ color: 0x5a3a24, roughness: 0.5, clearcoat: 0.3 });
 
-  const smooth = prof => new THREE.SplineCurve(prof.map(([r, y]) => new THREE.Vector2(r, y))).getPoints(Math.max(24, prof.length * 6));
-  const rAt = (pts, y) => {
-    for (let i = 1; i < pts.length; i++) if (pts[i].y >= y) {
-      const a = pts[i - 1], b = pts[i], t = (y - a.y) / ((b.y - a.y) || 1); return a.x + (b.x - a.x) * t;
-    }
-    return pts[pts.length - 1].x;
-  };
-  function lathe(pts, mat, fold) {
-    const geo = new THREE.LatheGeometry(pts, 72, PI, 2 * PI);
-    const p = geo.attributes.position, n = pts.length;
-    if (fold) for (let i = 0; i < p.count; i++) {
-      const x = p.getX(i), y = p.getY(i), z = p.getZ(i), f = 1 + fold(Math.atan2(x, z), y);
-      p.setXYZ(i, x * f, y, z * f);
-    }
-    geo.computeVertexNormals();
-    const nm = geo.attributes.normal, last = 72 * n;
-    for (let j = 0; j < n; j++) {
-      const a = new THREE.Vector3().fromBufferAttribute(nm, j).add(new THREE.Vector3().fromBufferAttribute(nm, last + j)).normalize();
-      nm.setXYZ(j, a.x, a.y, a.z); nm.setXYZ(last + j, a.x, a.y, a.z);
-    }
-    return shade(new THREE.Mesh(geo, mat));
-  }
   function shade(m) { m.castShadow = true; m.receiveShadow = true; return m; }
-  const sph = (r, mat, ...a) => shade(new THREE.Mesh(new THREE.SphereGeometry(r, 40, 24, ...a), mat));
-  const cap = (r, l, mat) => shade(new THREE.Mesh(new THREE.CapsuleGeometry(r, l, 6, 14), mat));
-  const at = (m, x, y, z, sx, sy, sz) => { m.position.set(x, y, z); if (sx) m.scale.set(sx, sy, sz); return m; };
+  const sph = (r, mat) => shade(new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), mat));
+
   const fig = new THREE.Group(); scene.add(fig);
-  const parts = {};
-  const gauss = (y, c, w) => Math.exp(-(((y - c) / w) ** 2));
+  const layerMats = { skin, shirt, pants, shoes: shoeMat, soles: soleMat, hair };
+  for (const m of Object.values(layerMats)) m.vertexColors = true;
+  skin.color.set(0xffffff);
+  const meshes = {}, patches = new Map(), leaders = new Map();
+  const loading = document.getElementById('fig-loading');
 
-  const torso = new THREE.Group(); torso.scale.set(1, 1, 0.62); fig.add(torso);
-  const torsoPts = smooth([[0.192, 0.90], [0.186, 0.95], [0.176, 1.03], [0.178, 1.10], [0.19, 1.19], [0.199, 1.28], [0.2, 1.35],
-    [0.188, 1.41], [0.155, 1.455], [0.105, 1.483], [0.07, 1.495]]);
-  torso.add(lathe(torsoPts, shirt, (phi, y) => 0.008 * gauss(y, 1.0, 0.05) * Math.sin(phi * 9) + 0.005 * gauss(y, 0.92, 0.03) * Math.sin(phi * 4 + 1)));
-  parts.torso = { g: torso, pts: torsoPts };
-
-  const hips = new THREE.Group(); hips.scale.set(1, 1, 0.6); fig.add(hips);
-  const hipPts = smooth([[0.168, 0.76], [0.178, 0.80], [0.184, 0.86], [0.176, 0.92], [0.166, 0.965]]);
-  hips.add(lathe(hipPts, pants));
-  parts.hips = { g: hips, pts: hipPts };
-
-  for (const s of [1, -1]) {
-    const leg = new THREE.Group(); leg.position.x = s * 0.092; leg.scale.z = 0.94; fig.add(leg);
-    const legPts = smooth([[0.06, 0.065], [0.058, 0.10], [0.057, 0.18], [0.061, 0.30], [0.064, 0.38], [0.066, 0.46], [0.072, 0.54],
-      [0.08, 0.64], [0.087, 0.74], [0.09, 0.80], [0.088, 0.84]]);
-    leg.add(lathe(legPts, pants, (phi, y) => 0.03 * gauss(y, 0.1, 0.035) * Math.sin(phi * 6 + y * 60) + 0.012 * gauss(y, 0.47, 0.03) * Math.sin(phi * 4)));
-    leg.add(at(sph(0.05, shoeMat), 0, 0.045, 0.04, 0.84, 0.68, 2.5));
-    leg.add(at(sph(0.05, soleMat), 0, 0.017, 0.045, 0.96, 0.32, 2.62));
-    parts[s > 0 ? 'legL' : 'legR'] = { g: leg, pts: legPts };
-
-    const arm = new THREE.Group(); arm.position.set(s * 0.185, 1.415, 0); arm.rotation.set(0.03, 0, s * 0.09); fig.add(arm);
-    arm.add(at(sph(0.058, shirt), 0, -0.01, 0, 1, 1.05, 0.95));
-    const sleevePts = smooth([[0.064, -0.165], [0.06, -0.13], [0.058, -0.08], [0.058, -0.03], [0.056, 0.0]]);
-    arm.add(lathe(sleevePts, shirt, (phi, y) => 0.012 * gauss(y, -0.158, 0.015) * Math.sin(phi * 5)));
-    arm.add(lathe(smooth([[0.038, -0.30], [0.041, -0.25], [0.045, -0.19], [0.046, -0.14]]), skin));
-    parts[s > 0 ? 'armL' : 'armR'] = { g: arm, pts: sleevePts };
-
-    const elbow = new THREE.Group(); elbow.position.y = -0.295; elbow.rotation.x = -0.18; arm.add(elbow);
-    elbow.add(sph(0.037, skin));
-    elbow.add(lathe(smooth([[0.026, -0.245], [0.028, -0.2], [0.034, -0.12], [0.04, -0.05], [0.038, 0.0]]), skin));
-    const hand = new THREE.Group(); hand.position.y = -0.245; hand.rotation.y = s * 0.15; elbow.add(hand);
-    hand.add(at(cap(0.026, 0.035, skin), 0, -0.045, 0, 0.48, 1, 1.25));
-    [[0.042, 0.022], [0.048, 0.007], [0.045, -0.008], [0.035, -0.022]].forEach(([len, z]) => {
-      const f = new THREE.Group(); f.position.set(0, -0.085, z); f.rotation.z = -s * 0.22; hand.add(f);
-      f.add(at(cap(0.0085, len, skin), 0, -len / 2, 0));
-    });
-    const th = new THREE.Group(); th.position.set(-s * 0.008, -0.03, 0.028); th.rotation.set(-0.6, 0, -s * 0.15); hand.add(th);
-    th.add(at(cap(0.0105, 0.03, skin), 0, -0.022, 0));
-  }
-
-  fig.add(at(lathe(smooth([[0.056, 1.47], [0.052, 1.52], [0.05, 1.57], [0.054, 1.61]]), skin), 0, 0, 0, 1, 1, 0.95));
-  const collar = at(shade(new THREE.Mesh(new THREE.TorusGeometry(0.066, 0.012, 10, 40), shirt)), 0, 1.495, 0, 1, 0.9, 1);
-  collar.rotation.x = PI / 2; fig.add(collar);
-
-  function fixSeam(geo, cols, rows) {
-    const nm = geo.attributes.normal, v = new THREE.Vector3(), w = new THREE.Vector3();
-    for (let iy = 0; iy <= rows; iy++) {
-      const a = iy * (cols + 1), b = a + cols;
-      v.fromBufferAttribute(nm, a).add(w.fromBufferAttribute(nm, b)).normalize();
-      nm.setXYZ(a, v.x, v.y, v.z); nm.setXYZ(b, v.x, v.y, v.z);
+  function decode(buf) {
+    const hl = new DataView(buf).getUint32(0, true);
+    const header = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, hl)));
+    const base = 4 + hl;
+    for (const L of header.layers) {
+      const g = new THREE.BufferGeometry(), n = L.vcount;
+      const q = new Uint16Array(buf, base + L.pos, n * 3), p = new Float32Array(n * 3);
+      for (let i = 0; i < n * 3; i++) { const a = i % 3; p[i] = L.lo[a] + q[i] / 65535 * (L.hi[a] - L.lo[a]); }
+      g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+      g.setAttribute('normal', new THREE.BufferAttribute(new Int8Array(buf, base + L.nrm, n * 3), 3, true));
+      const c8 = new Uint8Array(buf, base + L.col, n * 3);
+      g.setAttribute('color', new THREE.BufferAttribute(Float32Array.from(c8, v => (v / 255) ** 2.2), 3));
+      if (L.uv != null) g.setAttribute('uv', new THREE.BufferAttribute(Float32Array.from(new Int16Array(buf, base + L.uv, n * 2), v => v / 1000), 2));
+      g.setIndex(new THREE.BufferAttribute(L.idx32 ? new Uint32Array(buf, base + L.idx, L.icount) : new Uint16Array(buf, base + L.idx, L.icount), 1));
+      g.computeBoundingSphere();
+      fig.add(meshes[L.name] = shade(new THREE.Mesh(g, layerMats[L.name])));
+    }
+    const pupilMat = new THREE.MeshPhysicalMaterial({ color: 0x0b0806, roughness: 0.1, clearcoat: 1 });
+    for (const c of header.eyes) {
+      const eye = new THREE.Group(); eye.position.set(c[0], c[1], c[2]); eye.rotation.y = -c[0] * 1.2; fig.add(eye);
+      eye.add(sph(header.eyeR, eyeWhite));
+      const iris = sph(header.eyeR * 0.5, irisMat); iris.position.z = header.eyeR * 0.86; iris.scale.z = 0.35; eye.add(iris);
+      const pupil = sph(header.eyeR * 0.22, pupilMat); pupil.position.z = header.eyeR * 0.95; pupil.scale.z = 0.3; eye.add(pupil);
     }
   }
-  function skull(k, thetaLen) {
-    const geo = new THREE.SphereGeometry(0.1 * k, 64, 40, 0, 2 * PI, 0, thetaLen || PI), p = geo.attributes.position;
-    for (let i = 0; i < p.count; i++) {
-      let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
-      const t = Math.max(0, -y / (0.1 * k));
-      x *= 0.87 * (1 - 0.28 * t ** 1.6); y *= 1.13; z *= (1 - 0.12 * t) * (z < 0 ? 1.04 : 0.97);
-      p.setXYZ(i, x, y, z);
+
+  const helper = new THREE.Object3D(), caster = new THREE.Raycaster();
+  function buildPatches() {
+    for (const sp of SPOTS) {
+      const target = meshes[sp.layer], o = new THREE.Vector3(...sp.o), d = new THREE.Vector3(...sp.d).normalize();
+      caster.set(o, d);
+      const hit = caster.intersectObject(target, false)[0];
+      if (!hit) continue;
+      helper.position.copy(hit.point); helper.lookAt(hit.point.clone().sub(d));
+      const geo = new THREE.DecalGeometry(target, hit.point, helper.rotation.clone(), new THREE.Vector3(sp.w, sp.h, sp.depth));
+      const canvas = document.createElement('canvas');
+      canvas.height = 256; canvas.width = Math.round(256 * sp.w / sp.h);
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 8;
+      const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.85, emissive: 0x2b48ff, emissiveIntensity: 0,
+        polygonOffset: true, polygonOffsetFactor: -4, depthWrite: false });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.receiveShadow = true; mesh.userData.id = sp.id; mesh.renderOrder = 2;
+      fig.add(mesh);
+      patches.set(sp.id, { mesh, canvas, ctx: canvas.getContext('2d'), tex, sp });
+      drawPatch(sp.id, leaders.get(sp.id) || null);
     }
-    geo.computeVertexNormals(); fixSeam(geo, 64, 40);
-    return geo;
+    highlight();
   }
-  const head = new THREE.Group(); head.position.set(0, 1.668, 0.008); fig.add(head);
-  head.add(shade(new THREE.Mesh(skull(1), skin)));
-  const hairCap = shade(new THREE.Mesh(skull(1.065, PI * 0.56), hair)); hairCap.rotation.x = -0.42; hairCap.position.set(0, 0.006, -0.004); head.add(hairCap);
-  for (const s of [1, -1]) {
-    head.add(at(sph(0.0125, eyeWhite), s * 0.031, 0.012, 0.079));
-    head.add(at(sph(0.0062, irisMat), s * 0.031, 0.012, 0.0905));
-    const lid = at(sph(0.0136, skin, 0, 2 * PI, 0, PI * 0.42), s * 0.031, 0.012, 0.079); lid.rotation.x = 0.25; head.add(lid);
-    const brow = at(cap(0.0035, 0.022, hair), s * 0.032, 0.034, 0.087, 1, 1, 0.6); brow.rotation.z = PI / 2 - s * 0.12; head.add(brow);
-    const ear = at(sph(0.024, skin), s * 0.084, -0.003, -0.008, 0.35, 1.05, 0.68); ear.rotation.y = s * 0.3; head.add(ear);
-    head.add(at(sph(0.007, skin), s * 0.01, -0.027, 0.093));
-  }
-  const bridge = at(cap(0.0085, 0.028, skin), 0, -0.004, 0.091); bridge.rotation.x = 0.32; head.add(bridge);
-  head.add(at(sph(0.012, skin), 0, -0.024, 0.099, 1.15, 0.9, 1));
-  const lipU = at(cap(0.0045, 0.026, lipMat), 0, -0.048, 0.087, 1, 1, 0.7); lipU.rotation.z = PI / 2; head.add(lipU);
-  const lipL = at(cap(0.0055, 0.022, lipMat), 0, -0.056, 0.085, 1, 1, 0.7); lipL.rotation.z = PI / 2; head.add(lipL);
-  const patches = new Map();
-  for (const sp of SPOTS) {
-    const P = parts[sp.part], pts = [];
-    for (let i = 0; i <= 10; i++) { const y = sp.y0 + (sp.y1 - sp.y0) * i / 10; pts.push(new THREE.Vector2(rAt(P.pts, y) * 1.016 + 0.0016, y)); }
-    const geo = new THREE.LatheGeometry(pts, 24, sp.tc - sp.tl / 2, sp.tl);
-    geo.computeVertexNormals();
-    const rMid = rAt(P.pts, (sp.y0 + sp.y1) / 2), chord = 2 * rMid * Math.sin(sp.tl / 2), h = sp.y1 - sp.y0;
-    const canvas = document.createElement('canvas');
-    canvas.height = 256; canvas.width = Math.max(160, Math.min(900, Math.round(256 * chord / h)));
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 8;
-    const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.85, emissive: 0x2b48ff, emissiveIntensity: 0,
-      bumpMap: sp.garment === 'Tröja' ? knit : denim, bumpScale: 0.01, polygonOffset: true, polygonOffsetFactor: -4, depthWrite: false });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.receiveShadow = true; mesh.userData.id = sp.id;
-    P.g.add(mesh);
-    patches.set(sp.id, { mesh, canvas, ctx: canvas.getContext('2d'), tex, sp });
-  }
+
+  fetch('figure.bin')
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+    .then(buf => { decode(buf); buildPatches(); if (loading) loading.hidden = true; })
+    .catch(() => { if (loading) loading.textContent = 'Figuren kunde inte laddas. Ladda om sidan.'; });
 
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
   function fit(ctx, text, weight, family, max, maxW) {
@@ -475,6 +416,8 @@ window.Fig = (() => {
   }
   const DISPLAY = '"Archivo", "Arial Narrow", sans-serif', MONO = '"JetBrains Mono", monospace';
   function drawPatch(id, leader) {
+    leaders.set(id, leader);
+    if (!patches.has(id)) return;
     const { canvas: c, ctx, tex, sp } = patches.get(id);
     const W = c.width, H = c.height, m = 8, onShirt = sp.garment === 'Tröja';
     ctx.clearRect(0, 0, W, H);
@@ -558,7 +501,6 @@ window.Fig = (() => {
       camera.position.set(controls.target.x + Math.sin(a) * tween.rad, controls.target.y + tween.y, controls.target.z + Math.cos(a) * tween.rad);
       if (tween.t >= 1) tween = null;
     }
-    if (!reduce) { const b = Math.sin(now / 1000 * 1.6); torso.scale.x = 1 + 0.004 * b; torso.scale.z = 0.62 * (1 + 0.01 * b); }
     controls.update();
     renderer.render(scene, camera);
     requestAnimationFrame(loop);
@@ -567,7 +509,7 @@ window.Fig = (() => {
   const api = {
     drawPatch, onPick: null,
     select(id) { selected = id; highlight(); },
-    focus(id) { focusAngle(patches.get(id).sp.tc); },
+    focus(id) { focusAngle(SPOTS.find(s => s.id === id).tc); },
     face(a) { focusAngle(a); },
   };
   return api;
