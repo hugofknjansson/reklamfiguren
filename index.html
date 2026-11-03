@@ -43,59 +43,128 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); fon
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 32px }
 .wrap { max-width: 1320px; margin: 0 auto; display: grid; gap: 16px }
 
-/* Header */
-.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px; padding-block: 4px }
-.brand { display: flex; align-items: center; gap: 12px; min-width: 0 }
-.logo { width: 40px; height: 40px; border-radius: 12px; background: var(--ink); color: var(--bg); display: grid; place-items: center; flex: none }
-.logo svg { width: 22px; height: 22px }
-.brand h1 { font-family: var(--f-display); font-stretch: 112%; font-weight: 750; font-size: clamp(22px, 3vw, 28px);
-  letter-spacing: -0.035em; line-height: 1; margin: 0 }
-.brand p { margin: 4px 0 0; color: var(--muted); font-size: 13px }
-.stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 }
-.stat { display: grid; gap: 1px; padding: 8px 14px; border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--hair) }
-.stat dt { font-size: 11px; letter-spacing: .04em; color: var(--muted) }
-.stat dd { margin: 0; font-family: var(--f-mono); font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap }
-@media (max-width: 600px) {
-  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100% }
-  .stat { padding: 8px 10px; min-width: 0 }
-  .stat dd { font-size: 13px; white-space: normal }
-}
-
-/* Main grid */
-.layout { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 16px; align-items: start }
-@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr) } }
-
-/* Stage */
-.stage { position: relative; border-radius: var(--r-lg); overflow: hidden; touch-action: none; isolation: isolate;
-  height: calc(100vh - 112px); min-height: 520px; max-height: 900px;
-  position: sticky; top: max(16px, env(safe-area-inset-top, 0px));
+/* Full-screen stage */
+html, body { height: 100% }
+body { padding: 0; overflow: hidden; overscroll-behavior: none }
+.stage { position: fixed; inset: 0; touch-action: none; isolation: isolate; margin: 0;
   background:
-    radial-gradient(ellipse 55% 60% at 50% 38%, var(--stage-spot) 0%, transparent 72%),
-    linear-gradient(180deg, var(--stage-edge), var(--bg));
-  border: 1px solid var(--hair) }
-@media (max-width: 900px) { .stage { position: relative; top: 0; height: 64vh; min-height: 420px } }
+    radial-gradient(ellipse 50% 62% at 50% 40%, var(--stage-spot) 0%, transparent 72%),
+    linear-gradient(180deg, var(--stage-edge), var(--bg)) }
 .stage canvas { display: block; width: 100%; height: 100%; cursor: grab; outline: none }
 .stage canvas:active { cursor: grabbing }
 .stage canvas.hover { cursor: pointer }
-.loading { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; font-size: 13px; color: var(--muted); padding: 8px 14px; border-radius: 999px }
-.stage .floor { position: absolute; left: 50%; bottom: 7%; width: min(70%, 520px); aspect-ratio: 4 / 1; transform: translateX(-50%);
+.stage .floor { position: absolute; left: 50%; bottom: 6%; width: min(60%, 560px); aspect-ratio: 4 / 1; transform: translateX(-50%);
   background: radial-gradient(closest-side, var(--floor), transparent); pointer-events: none; z-index: 0 }
-.stage .hud { position: absolute; left: 14px; right: 14px; top: 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; pointer-events: none }
-.stage .hud > * { pointer-events: auto }
 .glass { background: color-mix(in srgb, var(--surface) 72%, transparent); border: 1px solid var(--hair);
   -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4) }
-.hint { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); padding: 7px 12px 7px 10px; border-radius: 999px }
-.hint svg { width: 16px; height: 16px; color: var(--ink) }
-.views { display: flex; gap: 2px; padding: 3px; border-radius: 999px }
-.view-btn { font: 600 12.5px var(--f-body); color: var(--ink); background: transparent; border: 0; padding: 6px 14px; border-radius: 999px; cursor: pointer;
-  transition: background-color 150ms ease, transform 160ms var(--ease-out) }
-.view-btn:active { transform: scale(0.96) }
-@media (hover: hover) and (pointer: fine) { .view-btn:hover { background: var(--accent-soft) } }
-.legend { position: absolute; left: 14px; bottom: 14px; display: flex; gap: 14px; font-size: 12px; color: var(--muted); padding: 7px 12px; border-radius: 999px }
-.legend span { display: inline-flex; align-items: center; gap: 6px }
-.sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block }
-.sw.free { border: 1.5px dashed var(--accent); background: var(--accent-soft) }
-.sw.taken { background: var(--lead) }
+.loading { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; font-size: 13px; color: var(--muted); padding: 8px 14px; border-radius: 999px }
+.hint { position: absolute; z-index: 2; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); margin: 0;
+  display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; font-size: 13px; color: var(--ink); padding: 9px 16px 9px 12px; border-radius: 999px;
+  transition: opacity 250ms ease, transform 250ms var(--ease-out) }
+.hint svg { width: 16px; height: 16px; color: var(--accent) }
+.hint.gone { opacity: 0; transform: translate(-50%, 8px); pointer-events: none }
+
+/* Bid sheet: side panel on desktop, bottom sheet on phones */
+.sheet { position: fixed; z-index: 5; top: max(16px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  width: min(400px, calc(100vw - 32px)); overflow-y: auto; overscroll-behavior: contain; padding: 22px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent); border: 1px solid var(--hair); border-radius: 24px;
+  -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: 0 1px 2px var(--hair), 0 30px 70px -24px var(--shadow);
+  transform: translateX(calc(100% + 40px)); visibility: hidden;
+  transition: transform 200ms var(--ease-out), visibility 0s linear 200ms }
+.sheet.open { transform: none; visibility: visible; transition: transform 420ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s }
+.sheet.dragging { transition: none }
+.grab { display: none }
+.close { position: absolute; top: 16px; right: 16px; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; border: 0; cursor: pointer;
+  color: var(--muted); background: var(--bg); transition: transform 160ms var(--ease-out), color 150ms ease }
+.close svg { width: 16px; height: 16px }
+.close:active { transform: scale(0.94) }
+@media (hover: hover) and (pointer: fine) { .close:hover { color: var(--ink) } }
+.detail h2 { padding-right: 40px }
+.ends { font-size: 12px; color: var(--faint); margin: 6px 6px 0 }
+.sheet .note { margin-top: 18px }
+@media (max-width: 700px) {
+  .sheet { top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 86dvh; border-radius: 24px 24px 0 0; border-bottom: 0;
+    padding: 10px max(20px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+    transform: translateY(100%) }
+  .grab { display: block; width: 40px; height: 5px; border-radius: 99px; background: var(--line); margin: 0 auto 12px; touch-action: none; cursor: grab;
+    box-shadow: 0 0 0 14px transparent }
+  .close { top: 14px }
+  .detail h2 { font-size: 26px }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet, .sheet.open { transition: opacity 150ms ease, visibility 0s linear 150ms; transform: none; opacity: 0 }
+  .sheet.open { opacity: 1; transition: opacity 150ms ease, visibility 0s }
+  .hint { transition: opacity 150ms ease }
+}
+
+/* Panel */
+.panel { display: grid; gap: 12px; min-width: 0 }
+.card { background: var(--surface); border: 1px solid var(--hair); border-radius: var(--r-lg); padding: 20px;
+  box-shadow: 0 1px 2px var(--hair), 0 12px 32px -18px var(--shadow) }
+.eyebrow { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); margin: 0 }
+.detail h2 { font-family: var(--f-display); font-stretch: 108%; font-weight: 700; font-size: 30px; letter-spacing: -0.03em; line-height: 1.05; margin: 6px 0 16px; text-wrap: balance }
+.price { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 14px 16px; border-radius: var(--r-md); background: var(--bg) }
+.price .lbl { font-size: 12px; color: var(--muted) }
+.price .amt { display: block; font-family: var(--f-mono); font-weight: 700; font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; font-variant-numeric: tabular-nums }
+.leader { margin: 12px 2px 0; font-size: 14px; color: var(--muted); min-height: 1.5em }
+.leader b { color: var(--ink); font-weight: 600 }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap }
+.chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor }
+.chip.free { color: var(--accent); background: var(--accent-soft) }
+.chip.taken { color: var(--lead); background: var(--lead-soft) }
+.chip.mine { color: var(--accent-ink); background: var(--accent) }
+.chip.out { color: var(--warn); background: var(--warn-soft) }
+
+/* Form */
+form { display: grid; gap: 14px; margin-top: 18px }
+label { display: grid; gap: 6px; font-size: 13px; font-weight: 600 }
+input { font: 500 16px var(--f-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: 11px 14px; width: 100%; outline: none; transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease }
+input::placeholder { color: var(--faint) }
+input:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); background: var(--surface) }
+button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.amount-row { display: flex; gap: 6px }
+.amount-row input { font-family: var(--f-mono); font-weight: 700; font-variant-numeric: tabular-nums; min-width: 0; flex: 1 }
+.quick { display: flex; gap: 6px; flex-wrap: wrap }
+.pill { font: 600 12.5px var(--f-mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); padding: 6px 11px; border-radius: 999px; cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease, transform 160ms var(--ease-out) }
+.pill:active { transform: scale(0.95) }
+@media (hover: hover) and (pointer: fine) { .pill:hover { border-color: var(--accent); background: var(--accent-soft) } }
+.help { font-size: 12px; color: var(--muted); font-weight: 400 }
+.btn-primary { font: 650 15px var(--f-body); color: var(--accent-ink); background: var(--accent); border: 0; border-radius: var(--r-md); padding: 14px 18px; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 8px 20px -10px var(--accent);
+  transition: transform 160ms var(--ease-out), filter 150ms ease, opacity 150ms ease }
+.btn-primary:active:not(:disabled) { transform: scale(0.97) }
+@media (hover: hover) and (pointer: fine) { .btn-primary:hover:not(:disabled) { filter: brightness(1.07) } }
+.btn-primary:disabled { opacity: .45; cursor: not-allowed; box-shadow: none }
+.msg { font-size: 13px; margin: 0; min-height: 1.4em; border-radius: var(--r-sm) }
+.msg.ok, .msg.err { padding: 9px 12px; transition: opacity 250ms var(--ease-out), transform 250ms var(--ease-out) }
+@starting-style { .msg.ok, .msg.err { opacity: 0; transform: translateY(4px) } }
+.msg.ok { color: var(--lead); background: var(--lead-soft) }
+.msg.err { color: var(--warn); background: var(--warn-soft) }
+.history { list-style: none; margin: 16px 0 0; padding: 14px 0 0; border-top: 1px solid var(--line); display: grid; gap: 6px; font-size: 13px }
+.history:empty { display: none }
+.history li { display: flex; justify-content: space-between; gap: 10px; color: var(--muted) }
+.history li span:last-child { font-family: var(--f-mono); font-variant-numeric: tabular-nums }
+.history li:first-child { color: var(--ink); font-weight: 600 }
+
+.note { margin-top: 18px }
+@media (max-width: 700px) {
+  .sheet { top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 86dvh; border-radius: 24px 24px 0 0; border-bottom: 0;
+    padding: 10px max(20px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+    transform: translateY(100%) }
+  .grab { display: block; width: 40px; height: 5px; border-radius: 99px; background: var(--line); margin: 0 auto 12px; touch-action: none; cursor: grab;
+    box-shadow: 0 0 0 14px transparent }
+  .close { top: 14px }
+  .detail h2 { font-size: 26px }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet, .sheet.open { transition: opacity 150ms ease, visibility 0s linear 150ms; transform: none; opacity: 0 }
+  .sheet.open { opacity: 1; transition: opacity 150ms ease, visibility 0s }
+  .hint { transition: opacity 150ms ease }
+}
 
 /* Panel */
 .panel { display: grid; gap: 12px; min-width: 0 }
@@ -177,77 +246,52 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div class="brand">
-      <span class="logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 6l2 4 2-1v12h8V9l2 1 2-4-4-3c-.6 1.4-2.1 2.4-4 2.4S8.6 4.4 8 3Z"/><path d="M10 13h4"/></svg>
-      </span>
-      <div>
-        <h1>Reklamfiguren</h1>
-        <p>Buda på en yta på tröjan eller byxorna. Högsta budet syns på figuren.</p>
-      </div>
+<main class="stage" id="stage" aria-label="3D-figur med reklamytor. Klicka på en yta på kläderna för att buda.">
+  <div class="floor"></div>
+  <div class="loading glass" id="fig-loading">Laddar figuren…</div>
+  <p class="hint glass" id="hint">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10"/><path d="M12 9.5a1.5 1.5 0 0 1 3 0V11"/><path d="M15 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.6a6 6 0 0 1-4.9-2.6L4.3 15a1.5 1.5 0 0 1 2.4-1.8L9 15.5"/></svg>
+    Klicka på en yta på kläderna för att buda
+  </p>
+</main>
+
+<aside class="sheet" id="sheet" aria-label="Lägg bud" aria-hidden="true" tabindex="-1">
+  <div class="grab" id="grab"></div>
+  <button class="close" id="close" type="button" aria-label="Stäng">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+  </button>
+  <div class="detail" id="detail" aria-live="polite">
+    <p class="eyebrow" id="d-meta">Tröja · 30 × 20 cm</p>
+    <h2 id="d-name">Bröst</h2>
+    <div class="price">
+      <span><span class="lbl" id="d-lbl">Utropspris</span><span class="amt" id="d-amt">5 000 kr</span></span>
+      <span id="d-chip" class="chip free">Ledig</span>
     </div>
-    <dl class="stats">
-      <div class="stat"><dt>Ytor med bud</dt><dd id="st-count">0 / 10</dd></div>
-      <div class="stat"><dt>Summa ledande bud</dt><dd id="st-sum">0 kr</dd></div>
-      <div class="stat"><dt>Stänger</dt><dd id="st-end">30 nov</dd></div>
-    </dl>
-  </header>
-
-  <main class="layout">
-    <section class="stage" id="stage" aria-label="3D-figur med reklamytor">
-      <div class="floor"></div>
-      <div class="loading glass" id="fig-loading">Laddar figuren…</div>
-      <div class="hud">
-        <span class="hint glass">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12a9 9 0 0 1 15.5-6.2"/><path d="M18.5 2v4h-4"/><path d="M5.5 22v-4h4"/></svg>
-          Dra för att vrida, klicka på en yta
+    <p class="leader" id="d-leader">Inga bud ännu.</p>
+    <form id="bid-form" novalidate>
+      <label for="brand">Företag eller varumärke som ska synas
+        <input id="brand" name="brand" maxlength="24" autocomplete="organization" placeholder="t.ex. Kaffebaren Norr" required>
+      </label>
+      <label for="amount">Ditt bud (kr)
+        <span class="amount-row">
+          <input id="amount" name="amount" type="number" inputmode="numeric" step="50" required>
         </span>
-        <div class="views glass" role="group" aria-label="Visa figuren">
-          <button class="view-btn" id="v-front" type="button">Framsida</button>
-          <button class="view-btn" id="v-back" type="button">Baksida</button>
-        </div>
+      </label>
+      <div class="quick" aria-label="Snabbval för budet">
+        <button class="pill" type="button" id="min-btn">Lägsta</button>
+        <button class="pill" type="button" data-inc="100">+100</button>
+        <button class="pill" type="button" data-inc="500">+500</button>
+        <button class="pill" type="button" data-inc="1000">+1 000</button>
       </div>
-      <div class="legend glass"><span><i class="sw free"></i>Ledig</span><span><i class="sw taken"></i>Har bud</span></div>
-    </section>
-
-    <aside class="panel">
-      <div class="card detail" id="detail" aria-live="polite">
-        <p class="eyebrow" id="d-meta">Tröja · 30 × 20 cm</p>
-        <h2 id="d-name">Bröst</h2>
-        <div class="price">
-          <span><span class="lbl" id="d-lbl">Utropspris</span><span class="amt" id="d-amt">5 000 kr</span></span>
-          <span id="d-chip" class="chip free">Ledig</span>
-        </div>
-        <p class="leader" id="d-leader">Inga bud ännu.</p>
-        <form id="bid-form" novalidate>
-          <label for="brand">Företag eller varumärke som ska synas
-            <input id="brand" name="brand" maxlength="24" autocomplete="organization" placeholder="t.ex. Kaffebaren Norr" required>
-          </label>
-          <label for="amount">Ditt bud (kr)
-            <span class="amount-row">
-              <input id="amount" name="amount" type="number" inputmode="numeric" step="50" required>
-            </span>
-          </label>
-          <div class="quick" aria-label="Snabbval för budet">
-            <button class="pill" type="button" id="min-btn">Lägsta</button>
-            <button class="pill" type="button" data-inc="100">+100</button>
-            <button class="pill" type="button" data-inc="500">+500</button>
-            <button class="pill" type="button" data-inc="1000">+1 000</button>
-          </div>
-          <span class="help" id="min-help">Lägsta bud 5 000 kr</span>
-          <button class="btn-primary" id="submit" type="submit">Lägg bud</button>
-          <p class="msg" id="msg"></p>
-        </form>
-        <ul class="history" id="history"></ul>
-      </div>
-
-      <div class="card list" id="list"></div>
-      <p class="note" id="sync-note">Ansluter till budlistan…</p>
-    </aside>
-  </main>
-</div>
+      <span class="help" id="min-help">Lägsta bud 5 000 kr</span>
+      <button class="btn-primary" id="submit" type="submit">Lägg bud</button>
+      <p class="msg" id="msg"></p>
+    </form>
+    <ul class="history" id="history"></ul>
+  </div>
+  <p class="note" id="sync-note">Ansluter till budlistan…</p>
+  <p class="ends" id="st-end"></p>
+</aside>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
@@ -292,9 +336,9 @@ window.Fig = (() => {
   scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
 
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
-  camera.position.set(0, 1.15, 3.9);
+  camera.position.set(0, 1.1, 4.3);
   const controls = new THREE.OrbitControls(camera, cv);
-  controls.target.set(0, 0.93, 0);
+  controls.target.set(0, 0.9, 0);
   Object.assign(controls, { enablePan: false, enableDamping: true, dampingFactor: 0.08, minDistance: 1.2, maxDistance: 5.5,
     minPolarAngle: 0.5, maxPolarAngle: 1.85, autoRotate: !reduce, autoRotateSpeed: 1.1 });
   let tween = null;
@@ -406,7 +450,7 @@ window.Fig = (() => {
 
   fetch('figure.bin')
     .then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
-    .then(buf => { decode(buf); buildPatches(); if (loading) loading.hidden = true; })
+    .then(buf => { decode(buf); buildPatches(); dirty = true; if (loading) loading.hidden = true; })
     .catch(() => { if (loading) loading.textContent = 'Figuren kunde inte laddas. Ladda om sidan.'; });
 
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
@@ -447,11 +491,12 @@ window.Fig = (() => {
       fit(ctx, 'från ' + kr(sp.start), 700, MONO, 34, W - 40);
       ctx.fillText('från ' + kr(sp.start), W / 2, H * 0.74);
     }
-    tex.needsUpdate = true;
+    tex.needsUpdate = true; dirty = true;
   }
 
-  let hovered = null, selected = null;
+  let hovered = null, selected = null, dirty = true;
   function highlight() {
+    dirty = true;
     for (const [id, p] of patches) p.mesh.material.emissiveIntensity = id === selected ? 0.5 : id === hovered ? 0.28 : 0;
   }
   const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
@@ -459,8 +504,10 @@ window.Fig = (() => {
     const r = cv.getBoundingClientRect();
     ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ptr, camera);
-    const hit = ray.intersectObjects([fig], true)[0];
-    return hit && hit.object.userData.id || null;
+    const hits = ray.intersectObjects([fig], true);
+    if (!hits.length) return null;
+    const near = hits.find(h => h.object.userData.id && h.distance - hits[0].distance < 0.012);
+    return near ? near.object.userData.id : null;
   }
   cv.addEventListener('pointermove', e => {
     if (e.pointerType !== 'mouse') return;
@@ -473,7 +520,7 @@ window.Fig = (() => {
   cv.addEventListener('pointerup', e => {
     if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
     const id = pick(e);
-    if (id && api.onPick) api.onPick(id);
+    if (api.onPick) api.onPick(id);
   });
 
   function focusAngle(a) {
@@ -484,8 +531,11 @@ window.Fig = (() => {
     tween = { from, d, t: reduce ? 1 : 0, rad: Math.hypot(off.x, off.z), y: off.y };
   }
 
+  let vw = 1, vh = 1;
+  const off = [0, 0], offT = [0, 0];
   function resize() {
-    const w = stage.clientWidth, h = stage.clientHeight;
+    dirty = true;
+    const w = vw = stage.clientWidth, h = vh = stage.clientHeight;
     renderer.setSize(w, h, false); camera.aspect = w / h;
     camera.fov = w / h < 0.8 ? 38 : 30;
     camera.updateProjectionMatrix();
@@ -501,8 +551,15 @@ window.Fig = (() => {
       camera.position.set(controls.target.x + Math.sin(a) * tween.rad, controls.target.y + tween.y, controls.target.z + Math.cos(a) * tween.rad);
       if (tween.t >= 1) tween = null;
     }
-    controls.update();
-    renderer.render(scene, camera);
+    let moved = !!tween;
+    if (Math.abs(offT[0] - off[0]) + Math.abs(offT[1] - off[1]) > 0.05) {
+      for (let i = 0; i < 2; i++) off[i] += (offT[i] - off[i]) * (reduce ? 1 : Math.min(1, dt * 8));
+      if (Math.abs(off[0]) + Math.abs(off[1]) > 0.5) camera.setViewOffset(vw, vh, off[0], off[1], vw, vh);
+      else if (camera.view && camera.view.enabled) camera.clearViewOffset();
+      moved = true;
+    }
+    if (controls.update()) moved = true;
+    if (moved || dirty) { renderer.render(scene, camera); dirty = false; }
     requestAnimationFrame(loop);
   })(last);
 
@@ -511,6 +568,7 @@ window.Fig = (() => {
     select(id) { selected = id; highlight(); },
     focus(id) { focusAngle(SPOTS.find(s => s.id === id).tc); },
     face(a) { focusAngle(a); },
+    inset(x, y) { offT[0] = x; offT[1] = y; },
   };
   return api;
 })();
@@ -559,7 +617,7 @@ window.Fig = (() => {
   }
 
   function renderList() {
-    const box = $('list'); box.textContent = '';
+    const box = $('list'); if (!box) return; box.textContent = '';
     for (const g of ['Tröja', 'Byxor']) {
       const sec = document.createElement('section');
       const h = document.createElement('h3'), items = SPOTS.filter(s => s.garment === g), cnt = document.createElement('span');
@@ -613,10 +671,8 @@ window.Fig = (() => {
   function renderStats() {
     let n = 0, sum = 0;
     for (const sp of SPOTS) { const L = ranking(sp.id)[0]; if (L) { n++; sum += L.amount; } }
-    $('st-count').textContent = `${n} / ${SPOTS.length}`;
-    $('st-sum').textContent = kr(sum);
     const days = Math.ceil((END - Date.now()) / 864e5);
-    $('st-end').textContent = ended() ? 'Stängd' : `30 nov · ${days} d kvar`;
+    $('st-end').textContent = ended() ? 'Auktionen är stängd.' : `Auktionen stänger 30 november kl. 20:00, om ${days} ${days === 1 ? 'dag' : 'dagar'}. ${n} av ${SPOTS.length} ytor har bud.`;
   }
 
   function render(resetAmount) {
@@ -624,19 +680,56 @@ window.Fig = (() => {
     renderList(); renderDetail(resetAmount); renderStats();
   }
 
-  function select(id, fromList) {
-    selected = id; Fig.select(id);
-    $('msg').textContent = ''; $('msg').className = 'msg';
-    render(true);
-    if (!reduceUI) $('detail').animate([{ opacity: 0.55, filter: 'blur(2px)' }, { opacity: 1, filter: 'blur(0)' }], { duration: 220, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' });
-    if (fromList) Fig.focus(id);
-    else if (matchMedia('(max-width: 880px)').matches) $('detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const sheet = $('sheet'), phone = matchMedia('(max-width: 700px)');
+  sheet.inert = true;
+  function fitFigure() {
+    if (!sheet.classList.contains('open')) return Fig.inset(0, 0);
+    if (phone.matches) Fig.inset(0, Math.min(sheet.offsetHeight * 0.42, innerHeight * 0.3));
+    else Fig.inset(Math.min((sheet.offsetWidth + 32) / 2, innerWidth * 0.22), 0);
   }
+  function openSheet(id) {
+    const wasOpen = sheet.classList.contains('open'), changed = id !== selected;
+    selected = id; Fig.select(id);
+    if (changed) { $('msg').textContent = ''; $('msg').className = 'msg'; }
+    render(changed);
+    if (wasOpen && changed && !reduceUI) $('detail').animate([{ opacity: 0.55, filter: 'blur(2px)' }, { opacity: 1, filter: 'blur(0)' }], { duration: 220, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' });
+    sheet.classList.add('open'); sheet.inert = false; sheet.setAttribute('aria-hidden', 'false');
+    $('hint').classList.add('gone');
+    if (!wasOpen && !phone.matches) sheet.focus({ preventScroll: true });
+    requestAnimationFrame(fitFigure);
+  }
+  function closeSheet() {
+    if (!sheet.classList.contains('open')) return;
+    sheet.classList.remove('open'); sheet.inert = true; sheet.setAttribute('aria-hidden', 'true');
+    sheet.style.transform = '';
+    Fig.select(null); fitFigure();
+  }
+  Fig.onPick = id => id ? openSheet(id) : closeSheet();
+  $('close').addEventListener('click', closeSheet);
+  addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+  addEventListener('resize', fitFigure);
 
-  Fig.onPick = id => select(id, false);
-  $('list').addEventListener('click', e => { const b = e.target.closest('.row'); if (b) select(b.dataset.id, true); });
-  $('v-front').addEventListener('click', () => Fig.face(0));
-  $('v-back').addEventListener('click', () => Fig.face(Math.PI));
+  let drag = null;
+  $('grab').addEventListener('pointerdown', e => {
+    if (!phone.matches || drag) return;
+    drag = { y: e.clientY, t: performance.now(), dy: 0, id: e.pointerId };
+    $('grab').setPointerCapture(e.pointerId); sheet.classList.add('dragging');
+  });
+  $('grab').addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const raw = e.clientY - drag.y;
+    drag.dy = raw > 0 ? raw : -Math.sqrt(-raw) * 2;
+    sheet.style.transform = `translateY(${drag.dy}px)`;
+  });
+  const endDrag = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const v = drag.dy / (performance.now() - drag.t);
+    sheet.classList.remove('dragging'); sheet.style.transform = '';
+    if (drag.dy > 120 || v > 0.11) closeSheet();
+    drag = null;
+  };
+  $('grab').addEventListener('pointerup', endDrag);
+  $('grab').addEventListener('pointercancel', endDrag);
   $('min-btn').addEventListener('click', () => { $('amount').value = minBid(selected); renderDetail(false); });
   document.querySelectorAll('[data-inc]').forEach(b => b.addEventListener('click', () => {
     const a = $('amount'); a.value = Math.max(Number(a.value) || 0, minBid(selected)) + Number(b.dataset.inc);
@@ -681,7 +774,7 @@ window.Fig = (() => {
     render(true);
   }
 
-  render(true); Fig.select(selected);
+  render(true);
   if (document.fonts) document.fonts.ready.then(() => render(false));
   setInterval(renderStats, 60000);
 
@@ -689,6 +782,7 @@ window.Fig = (() => {
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwbGhkbXJ6Y2xmbXlsY3p6aHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwOTgzMzIsImV4cCI6MjEwNTY3NDMzMn0.fPUlyxTc4lSLmaY6OZcq_z0ZGpdl4jMy7yflMDQH2aQ';
   const TABLE = 'reklamfiguren_bud';
   let sb = null, rows = new Map();
+  const justAdded = new Map();
 
   function rebuild() {
     const byUser = new Map();
@@ -703,7 +797,9 @@ window.Fig = (() => {
   async function loadAll() {
     const { data, error } = await sb.from(TABLE).select('id,spot,brand,amount,bidder,created_at').order('amount', { ascending: false }).limit(2000);
     if (error) throw error;
-    rows = new Map(data.map(r => [r.id, r])); rebuild(); render(false);
+    const next = new Map(data.map(r => [r.id, r]));
+    for (const [id, t] of justAdded) { if (Date.now() - t > 20000) justAdded.delete(id); else if (!next.has(id) && rows.has(id)) next.set(id, rows.get(id)); }
+    rows = next; rebuild(); render(false);
   }
   remoteSave = async (spot, brand, amount) => {
     const { data, error } = await sb.from(TABLE).insert({ spot, brand, amount, bidder: me }).select('id,spot,brand,amount,bidder,created_at').single();
@@ -711,7 +807,7 @@ window.Fig = (() => {
       loadAll().catch(() => {});
       throw { userMessage: error.code === 'P0001' ? error.message : 'Budet kunde inte sparas. Kontrollera anslutningen och försök igen.' };
     }
-    rows.set(data.id, data); rebuild();
+    rows.set(data.id, data); justAdded.set(data.id, Date.now()); rebuild();
   };
 
   (async () => {
