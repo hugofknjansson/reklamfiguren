@@ -5,6 +5,7 @@ import { buildBody, triangulate } from './mh/body.mjs';
 import { buildGarments } from './mh/garments.mjs';
 import { surfaceNets, bakeAO } from './mh/mesher.mjs';
 import { buildHead } from './mh/hair.mjs';
+import { applySmile } from './mh/expression.mjs';
 
 const t0 = Date.now();
 const log = m => console.log(`${m} (${((Date.now() - t0) / 1000).toFixed(1)} s)`);
@@ -78,6 +79,8 @@ export function write() {
 const body = buildBody();
 log('body posed');
 const { tris } = triangulate(body.bodyFaces);
+const smile = applySmile(body, tris, 1.7);
+console.log('mouth corners', smile.corner.map(c => c.map(v => v.toFixed(3)).join(',')).join(' | '));
 const et0 = triangulate(body.eyeObj.faces);
 const GM = buildGarments(body, tris, log, [{ pos: body.eyes, tris: et0.tris }]);
 const GH = buildHead(body, tris, et0.tris, log);
