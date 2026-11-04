@@ -476,11 +476,8 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
       Object.assign(sh.uniforms, motion);
       sh.vertexShader = sh.vertexShader
         .replace('#include <common>', '#include <common>\n' + MOTION_COMMON)
-        .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nobjectNormal = mRot(headE() * headW(position)) * objectNormal;')
         .replace('#include <begin_vertex>', `#include <begin_vertex>
 {
-  float hw = headW(position);
-  transformed = uNeck + mRot(headE() * hw) * (transformed - uNeck);
   float b = breath();
   transformed += normal * (0.0022 * b * chestW(position));
   transformed.y += 0.0018 * b * shoulderW(position);
@@ -498,6 +495,19 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
     const hl = new DataView(buf).getUint32(0, true);
     const header = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, hl)));
     const base = 4 + hl;
+    if (header.bones) {
+      header.bones.forEach(B => { const b = new THREE.Bone(); b.name = B.n; bones.push(b); boneByName[B.n] = b; });
+      header.bones.forEach((B, i) => {
+        const b = bones[i];
+        if (B.p >= 0) { const P = header.bones[B.p].h; b.position.set(B.h[0] - P[0], B.h[1] - P[1], B.h[2] - P[2]); bones[B.p].add(b); }
+        else { b.position.set(B.h[0], B.h[1], B.h[2]); fig.add(b); }
+        b.userData.rest = b.position.clone();
+      });
+      fig.updateMatrixWorld(true);
+      skeleton = new THREE.Skeleton(bones);
+      const H = n => header.bones.find(B => B.n === n).h, dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+      legLen = dist(H('upperleg01.L'), H('lowerleg01.L')) + dist(H('lowerleg01.L'), H('foot.L'));
+    }
     for (const L of header.layers) {
       const g = new THREE.BufferGeometry(), n = L.vcount;
       const q = new Uint16Array(buf, base + L.pos, n * 3), p = new Float32Array(n * 3);
@@ -511,6 +521,10 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
       if (L.delta) { const dl = new Int32Array(buf, base + L.idx, L.icount); ix = new Uint32Array(L.icount); let acc = 0; for (let i = 0; i < L.icount; i++) ix[i] = acc += dl[i]; }
       else ix = L.idx32 ? new Uint32Array(buf, base + L.idx, L.icount) : new Uint16Array(buf, base + L.idx, L.icount);
       g.setIndex(new THREE.BufferAttribute(ix, 1));
+      if (L.si != null) {
+        g.setAttribute('skinIndex', new THREE.BufferAttribute(new Uint8Array(buf, base + L.si, n * 4), 4));
+        g.setAttribute('skinWeight', new THREE.BufferAttribute(new Uint8Array(buf, base + L.sw, n * 4), 4, true));
+      }
       g.computeBoundingSphere();
       fig.add(meshes[L.name] = shade(new THREE.Mesh(g, layerMats[L.name])));
       if (L.name === 'strands') meshes[L.name].castShadow = false;
@@ -526,6 +540,67 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
     }
   }
 
+  const bones = [], boneByName = {};
+  let skeleton = null, legLen = 0.87;
+  // Bone weights for decal vertices come from the nearest vertex of the garment they are printed on.
+  function nearestFn(geo) {
+    if (geo.userData.nn) return geo.userData.nn;
+    const P = geo.attributes.position.array, C = 0.01, map = new Map(), key = (x, y, z) => `${Math.floor(x / C)},${Math.floor(y / C)},${Math.floor(z / C)}`;
+    for (let i = 0; i < P.length / 3; i++) { const k = key(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); if (!map.has(k)) map.set(k, []); map.get(k).push(i); }
+    return geo.userData.nn = (x, y, z) => {
+      const cx = Math.floor(x / C), cy = Math.floor(y / C), cz = Math.floor(z / C);
+      let best = 0, bd = Infinity;
+      for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) for (let c = -2; c <= 2; c++) for (const i of map.get(`${cx + a},${cy + b},${cz + c}`) || []) {
+        const d = (P[i * 3] - x) ** 2 + (P[i * 3 + 1] - y) ** 2 + (P[i * 3 + 2] - z) ** 2; if (d < bd) { bd = d; best = i; }
+      }
+      return best;
+    };
+  }
+  function skinDecal(geo, target) {
+    const tg = target.geometry, si = tg.attributes.skinIndex, sw = tg.attributes.skinWeight;
+    if (!si) return false;
+    const nn = nearestFn(tg), P = geo.attributes.position.array, n = P.length / 3, I = new Uint8Array(n * 4), Wt = new Uint8Array(n * 4);
+    for (let v = 0; v < n; v++) { const j = nn(P[v * 3], P[v * 3 + 1], P[v * 3 + 2]); for (let k = 0; k < 4; k++) { I[v * 4 + k] = si.array[j * 4 + k]; Wt[v * 4 + k] = sw.array[j * 4 + k]; } }
+    geo.setAttribute('skinIndex', new THREE.BufferAttribute(I, 4));
+    geo.setAttribute('skinWeight', new THREE.BufferAttribute(Wt, 4, true));
+    return true;
+  }
+  function toSkinned(mesh) {
+    if (!skeleton || !mesh.geometry.attributes.skinIndex) return mesh;
+    const sm = new THREE.SkinnedMesh(mesh.geometry, mesh.material);
+    Object.assign(sm, { castShadow: mesh.castShadow, receiveShadow: mesh.receiveShadow, renderOrder: mesh.renderOrder, frustumCulled: false });
+    sm.userData = mesh.userData;
+    sm.bind(skeleton, new THREE.Matrix4());
+    fig.remove(mesh); fig.add(sm);
+    return sm;
+  }
+  function skinAll() {
+    for (const k of Object.keys(meshes)) meshes[k] = toSkinned(meshes[k]);
+    for (const p of patches.values()) { p.mesh = toSkinned(p.mesh); p.mesh.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 1, 0), 3); }
+  }
+  const sm01 = (a, b, v) => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const bump = (c, a, b, e = 0.9) => sm01(a, a + e, c) * (1 - sm01(b - e, b, c));
+  const setRot = (n, x, y, z) => { const b = boneByName[n]; if (b) b.rotation.set(x, y, z); };
+  // A looping warm-up: arm swings, torso twists, then squats with arms forward.
+  function warmup(t) {
+    const c = t % 15;
+    const wA = bump(c, 0, 5.2), wT = bump(c, 5, 10.2), wS = bump(c, 10, 15);
+    const pa = t * 2 * Math.PI / 1.7, swing = (0.65 + 0.95 * Math.sin(pa)) * wA;
+    const sq = 0.36 * (0.5 - 0.5 * Math.cos(t * 2 * Math.PI / 2.2)) * wS;
+    const tw = 0.42 * Math.sin(t * 2 * Math.PI / 2.4) * wT;
+    for (const [L, s] of [['.L', 1], ['.R', -1]]) {
+      setRot('upperarm01' + L, -swing - sq * 3.2, 0, s * 0.22 * wT);
+      setRot('lowerarm01' + L, -0.35 * wA * (0.5 + 0.5 * Math.sin(pa)) - 0.3 * sq, 0, 0);
+      setRot('shoulder01' + L, -0.08 * swing, 0, 0);
+      setRot('upperleg01' + L, -sq, 0, 0);
+      setRot('lowerleg01' + L, 2 * sq, 0, 0);
+      setRot('foot' + L, -sq, 0, 0);
+    }
+    for (const n of ['spine05', 'spine04', 'spine03', 'spine02', 'spine01']) setRot(n, sq * 0.14, tw * 0.2, 0);
+    setRot('neck01', 0.03 * Math.sin(t * 0.7), -tw * 0.35 + 0.08 * Math.sin(t * 0.37), 0.02 * Math.sin(t * 0.5));
+    const R = boneByName['root'];
+    if (R) R.position.y = R.userData.rest.y - legLen * (1 - Math.cos(sq));
+  }
   const helper = new THREE.Object3D(), caster = new THREE.Raycaster();
   function buildPatches() {
     for (const sp of SPOTS) {
@@ -543,6 +618,7 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
       tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 8;
       const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.85, emissive: 0x2b48ff, emissiveIntensity: 0,
         polygonOffset: true, polygonOffsetFactor: -4, depthWrite: false });
+      skinDecal(geo, target);
       const mesh = new THREE.Mesh(geo, mat);
       addMotion(mat);
       mesh.receiveShadow = true; mesh.userData.id = sp.id; mesh.renderOrder = 2;
@@ -555,7 +631,7 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
 
   fetch('figure.bin.gz')
     .then(r => { if (!r.ok) throw new Error(r.status); return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); })
-    .then(buf => { decode(buf); buildPatches(); dirty = true; if (loading) loading.hidden = true; })
+    .then(buf => { decode(buf); buildPatches(); skinAll(); dirty = true; if (loading) loading.hidden = true; })
     .catch(() => { if (loading) loading.textContent = 'Figuren kunde inte laddas. Ladda om sidan.'; });
 
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
@@ -609,9 +685,8 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
     const r = cv.getBoundingClientRect();
     ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ptr, camera);
-    const hits = ray.intersectObjects([fig], true);
-    if (!hits.length) return null;
-    const near = hits.find(h => h.object.userData.id && h.distance - hits[0].distance < 0.012);
+    const hits = ray.intersectObjects([...patches.values()].map(p => p.mesh), false);
+    const near = hits.find(h => h.face && h.face.normal.dot(ray.ray.direction) < 0.2);
     return near ? near.object.userData.id : null;
   }
   cv.addEventListener('pointermove', e => {
@@ -665,11 +740,10 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
       moved = true;
     }
     if (controls.update()) moved = true;
-    if (!reduce && meshes.skin && now - lastIdle > 33) {
+    if (!reduce && meshes.skin && now - lastIdle > 16) {
       const t = now / 1000;
       motion.uTime.value = t;
-      fig.rotation.z = 0.005 * Math.sin(t * 0.41);
-      fig.rotation.x = 0.003 * Math.sin(t * 0.33 + 1);
+      if (skeleton) warmup(t);
       lastIdle = now; moved = true;
     }
     if (moved || dirty) { renderer.render(scene, camera); dirty = false; }

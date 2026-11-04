@@ -65,7 +65,7 @@ export function buildBody() {
   for (let i = 0; i < P.length / 3; i++) { const q = X([P[i * 3], P[i * 3 + 1], P[i * 3 + 2]]); out[i * 3] = q[0]; out[i * 3 + 1] = q[1]; out[i * 3 + 2] = q[2]; }
 
   const joints = {};
-  for (const [n, T] of Object.entries(posed.W)) joints[n] = { head: X(T.headPosed), tail: X(T.T(B[n].tail)), R: T.R };
+  for (const [n, T] of Object.entries(posed.W)) joints[n] = { head: X(T.headPosed), tail: X(T.T(B[n].tail)), R: T.R, parent: B[n].parent };
 
   // eyes: fit the high-poly proxy to the unposed mesh, then move it with the head bone
   const eyeObj = parseObj(readFileSync(MH + 'eyes/high-poly.obj', 'utf8'));

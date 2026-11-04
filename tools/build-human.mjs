@@ -45,7 +45,7 @@ const header = { layers: [] };
 const chunks = [];
 let offset = 0;
 const pushChunk = arr => { const buf = Buffer.from(arr.buffer, arr.byteOffset, arr.byteLength); const pad = (4 - (buf.length % 4)) % 4; chunks.push(buf, Buffer.alloc(pad)); const o = offset; offset += buf.length + pad; return o; };
-export function emit(name, pos, nrm, col, uv, triList) {
+export function emit(name, pos, nrm, col, uv, triList, skinW) {
   const tris = triList.flat ? triList.flat() : triList;
   const n = pos.length / 3;
   const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
@@ -60,6 +60,7 @@ export function emit(name, pos, nrm, col, uv, triList) {
   const entry = { name, vcount: n, icount: tris.length, lo, hi, idx32: n > 65535 };
   entry.pos = pushChunk(qpos); entry.nrm = pushChunk(qn); entry.col = pushChunk(qc);
   if (uv) entry.uv = pushChunk(Int16Array.from(uv, v => Math.round(v * 1000)));
+  if (skinW) { entry.si = pushChunk(skinW.si); entry.sw = pushChunk(skinW.sw); }
   const dl = new Int32Array(tris.length);
   for (let i = 0; i < tris.length; i++) dl[i] = tris[i] - (i ? tris[i - 1] : 0);
   entry.idx = pushChunk(dl); entry.delta = true;
@@ -81,6 +82,46 @@ log('body posed');
 const { tris } = triangulate(body.bodyFaces);
 const smile = applySmile(body, tris, 1.7);
 console.log('mouth corners', smile.corner.map(c => c.map(v => v.toFixed(3)).join(',')).join(' | '));
+// ---------- skinning: bone weights for every layer ----------
+const boneNames = Object.keys(body.joints), boneIdx = new Map(boneNames.map((n, i) => [n, i]));
+header.bones = boneNames.map(n => ({ n, p: body.joints[n].parent ? boneIdx.get(body.joints[n].parent) : -1, h: body.joints[n].head }));
+const baseWeights = i => {
+  const ws = (body.weightsOf[i] || []).slice().sort((a, b) => b[1] - a[1]).slice(0, 4);
+  return ws.length ? ws.map(([b, w]) => [boneIdx.get(b), w]) : [[boneIdx.get('root'), 1]];
+};
+const CELL = 0.015, hash = new Map(), keyOf = (x, y, z) => `${Math.floor(x / CELL)},${Math.floor(y / CELL)},${Math.floor(z / CELL)}`;
+for (const i of new Set(tris.flat())) { const k = keyOf(body.v[i * 3], body.v[i * 3 + 1], body.v[i * 3 + 2]); if (!hash.has(k)) hash.set(k, []); hash.get(k).push(i); }
+function nearby(x, y, z, k = 8) {
+  const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL), cz = Math.floor(z / CELL);
+  for (let r = 1; r <= 6; r++) {
+    const found = [];
+    for (let a = -r; a <= r; a++) for (let b = -r; b <= r; b++) for (let c = -r; c <= r; c++) {
+      const list = hash.get(`${cx + a},${cy + b},${cz + c}`); if (!list) continue;
+      for (const i of list) found.push([Math.hypot(body.v[i * 3] - x, body.v[i * 3 + 1] - y, body.v[i * 3 + 2] - z), i]);
+    }
+    if (found.length >= k) return found.sort((p, q) => p[0] - q[0]).slice(0, k);
+  }
+  return [];
+}
+function pack(perVertex) {
+  const n = perVertex.length, si = new Uint8Array(n * 4), sw = new Uint8Array(n * 4);
+  perVertex.forEach((ws, v) => {
+    const top = ws.slice().sort((a, b) => b[1] - a[1]).slice(0, 4), tot = top.reduce((a, x) => a + x[1], 0) || 1;
+    const q = top.map(([, w]) => Math.floor(w / tot * 255));
+    q[0] += 255 - q.reduce((a, x) => a + x, 0);
+    top.forEach(([b], j) => { si[v * 4 + j] = b; sw[v * 4 + j] = q[j]; });
+  });
+  return { si, sw };
+}
+const weightsNear = pos => {
+  const out = [];
+  for (let v = 0; v < pos.length / 3; v++) {
+    const acc = new Map();
+    for (const [d, i] of nearby(pos[v * 3], pos[v * 3 + 1], pos[v * 3 + 2])) for (const [b, w] of baseWeights(i)) acc.set(b, (acc.get(b) || 0) + w / (d + 0.004));
+    out.push(acc.size ? [...acc.entries()] : [[boneIdx.get('root'), 1]]);
+  }
+  return pack(out);
+};
 const et0 = triangulate(body.eyeObj.faces);
 const GM = buildGarments(body, tris, log, [{ pos: body.eyes, tris: et0.tris }]);
 const GH = buildHead(body, tris, et0.tris, log);
@@ -106,7 +147,7 @@ for (const g of garments) {
     for (let a = 0; a < 3; a++) col[v * 3 + a] = c[a] * ao[v];
     if (uv) { const [u, w] = g.uv(x, y, z); uv[v * 2] = u; uv[v * 2 + 1] = w; }
   }
-  emit(g.name, m.pos, m.nrm, col, uv, m.tris);
+  emit(g.name, m.pos, m.nrm, col, uv, m.tris, weightsNear(m.pos));
 }
 
 const covered = i => { const x = body.v[i * 3], y = body.v[i * 3 + 1], z = body.v[i * 3 + 2]; return garments.some(g => g.f(x, y, z) < -0.003); };
@@ -119,14 +160,14 @@ const skinAO = bakeAO(skin.pos, skinN, scene, 0.007);
 const skinCol = new Float64Array(skin.pos.length);
 const SK = lin([204, 146, 114].map(c => c / 255));
 for (let v = 0; v < skin.pos.length / 3; v++) { const c = GH.skinColor(skin.pos[v * 3], skin.pos[v * 3 + 1], skin.pos[v * 3 + 2]); for (let a = 0; a < 3; a++) skinCol[v * 3 + a] = c[a] * skinAO[v]; }
-emit('skin', skin.pos, skinN, skinCol, null, skin.tris);
+emit('skin', skin.pos, skinN, skinCol, null, skin.tris, pack(skin.src.map(baseWeights)));
 
-{ const S = GH.strands(); emit('strands', S.pos, S.nrm, S.col, S.uv, S.idx); }
+{ const S = GH.strands(); emit('strands', S.pos, S.nrm, S.col, S.uv, S.idx, weightsNear(S.pos)); }
 const et = triangulate(body.eyeObj.faces), vt = body.eyeObj.vt;
 const isCornea = k => { const u = et.uvs[k].reduce((a, t) => a + vt[t * 2], 0) / 3, w = et.uvs[k].reduce((a, t) => a + vt[t * 2 + 1], 0) / 3; return u > 0.84 && w < 0.16; };
 for (const [name, keep] of [['eyes', k => !isCornea(k)], ['cornea', isCornea]]) {
   const ks = et.tris.map((_, k) => k).filter(keep);
   const m = compact(body.eyes, ks.map(k => et.tris[k]), ks.map(k => et.uvs[k]), vt);
-  emit(name, m.pos, smoothNormals(m.pos, m.tris), null, m.uv, m.tris);
+  emit(name, m.pos, smoothNormals(m.pos, m.tris), null, m.uv, m.tris, pack(Array.from({ length: m.pos.length / 3 }, () => [[boneIdx.get('head'), 1]])));
 }
 write();
