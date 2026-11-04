@@ -89,8 +89,8 @@ console.log('head SD at skull centre', GH.headSD(...GH.origin).toFixed(3));
 const lin = c => c.map(v => v ** 2.2);
 const garments = [
   { name: 'shirt', f: GM.shirt, h: 0.0048, lo: [-0.36, GM.hemY - 0.02, -0.2], hi: [0.36, GM.neckY + 0.06, 0.22], uv: GM.shirtUV },
-  { name: 'pants', f: GM.pants, h: 0.0052, lo: [-0.3, 0.07, -0.2], hi: [0.3, GM.waistY + 0.02, 0.24], uv: GM.pantsUV,
-    color: (x, y, z) => { const w = GM.denimWash(x, y, z); return [0.62 + 0.38 * w, 0.64 + 0.36 * w, 0.68 + 0.32 * w]; } },
+  { name: 'pants', f: GM.pants, h: 0.0048, lo: [-0.3, GM.shortsHem - 0.02, -0.2], hi: [0.3, GM.waistY + 0.02, 0.24], uv: GM.pantsUV },
+  { name: 'socks', f: GM.socks, h: 0.003, lo: [-0.32, 0.03, -0.16], hi: [0.32, 0.15, 0.22], uv: (x, y, z) => [Math.atan2(x, z) * 0.06, y] },
   { name: 'shoes', f: GM.shoes, h: 0.0032, lo: GM.shoeBox.lo, hi: GM.shoeBox.hi, color: (x, y, z) => lin(GM.shoeColor(x, y, z)) },
   { name: 'hair', f: GH.hairCap, h: 0.003, lo: GH.box.lo, hi: GH.box.hi, uv: (x, y, z) => { const [a, b, c] = GH.toL([x, y, z]); return [Math.atan2(a, c) * 0.09, b]; } },
   { name: 'soles', f: GM.soles, h: 0.004, lo: [GM.shoeBox.lo[0], -0.004, GM.shoeBox.lo[2]], hi: [GM.shoeBox.hi[0], 0.05, GM.shoeBox.hi[2]], color: (x, y, z) => lin(GM.soleColor(x, y, z)) },

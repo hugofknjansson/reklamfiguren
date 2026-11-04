@@ -301,16 +301,16 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
 <script>
 const PI = Math.PI;
 const SPOTS = [
-  { id: 'brost',    name: 'Bröst',           garment: 'Tröja', size: '30 × 20 cm', start: 5000, layer: 'shirt', o: [0, 1.33, 1],         d: [0, 0, -1], w: 0.24,  h: 0.15, depth: 0.1,  tc: 0 },
-  { id: 'mage',     name: 'Mage',            garment: 'Tröja', size: '30 × 14 cm', start: 2500, layer: 'shirt', o: [0, 1.12, 1],         d: [0, 0, -1], w: 0.22,  h: 0.12, depth: 0.1,  tc: 0 },
-  { id: 'rygg',     name: 'Rygg',            garment: 'Tröja', size: '34 × 30 cm', start: 4000, layer: 'shirt', o: [0, 1.25, -1],        d: [0, 0, 1],  w: 0.27,  h: 0.24, depth: 0.1,  tc: PI },
-  { id: 'arm-v',    name: 'Vänster ärm',     garment: 'Tröja', size: '10 × 18 cm', start: 1500, layer: 'shirt', o: [1, 1.384, 0.025],    d: [-1, 0, 0], w: 0.07,  h: 0.09, depth: 0.06, tc: PI / 2 },
-  { id: 'arm-h',    name: 'Höger ärm',       garment: 'Tröja', size: '10 × 18 cm', start: 1500, layer: 'shirt', o: [-1, 1.369, 0.026],   d: [1, 0, 0],  w: 0.07,  h: 0.09, depth: 0.06, tc: -PI / 2 },
-  { id: 'lar-v',    name: 'Vänster lår',     garment: 'Byxor', size: '12 × 22 cm', start: 2000, layer: 'pants', o: [0.142, 0.66, 1],     d: [0, 0, -1], w: 0.09,  h: 0.15, depth: 0.08, tc: 0.05 },
-  { id: 'lar-h',    name: 'Höger lår',       garment: 'Byxor', size: '12 × 22 cm', start: 2000, layer: 'pants', o: [-0.142, 0.66, 1],    d: [0, 0, -1], w: 0.09,  h: 0.15, depth: 0.08, tc: -0.05 },
-  { id: 'ben-v',    name: 'Vänster smalben', garment: 'Byxor', size: '10 × 20 cm', start: 1000, layer: 'pants', o: [0.167, 0.28, 1],     d: [0, 0, -1], w: 0.075, h: 0.13, depth: 0.07, tc: 0.1 },
-  { id: 'ben-h',    name: 'Höger smalben',   garment: 'Byxor', size: '10 × 20 cm', start: 1000, layer: 'pants', o: [-0.174, 0.28, 1],    d: [0, 0, -1], w: 0.075, h: 0.13, depth: 0.07, tc: -0.1 },
-  { id: 'bakficka', name: 'Bakficka',        garment: 'Byxor', size: '14 × 12 cm', start: 1200, layer: 'pants', o: [0.085, 0.86, -1],    d: [0, 0, 1],  w: 0.09,  h: 0.075, depth: 0.06, tc: PI - 0.4 },
+  { id: 'brost',    name: 'Bröst',           garment: 'T-shirt', size: '30 × 20 cm', start: 5000, layer: 'shirt', o: [0, 1.33, 1],         d: [0, 0, -1], w: 0.24,  h: 0.15, depth: 0.1,  tc: 0 },
+  { id: 'mage',     name: 'Mage',            garment: 'T-shirt', size: '30 × 14 cm', start: 2500, layer: 'shirt', o: [0, 1.12, 1],         d: [0, 0, -1], w: 0.22,  h: 0.12, depth: 0.1,  tc: 0 },
+  { id: 'rygg',     name: 'Rygg',            garment: 'T-shirt', size: '34 × 30 cm', start: 4000, layer: 'shirt', o: [0, 1.25, -1],        d: [0, 0, 1],  w: 0.27,  h: 0.24, depth: 0.1,  tc: PI },
+  { id: 'arm-v',    name: 'Vänster ärm',     garment: 'T-shirt', size: '10 × 18 cm', start: 1500, layer: 'shirt', o: [1, 1.384, 0.025],    d: [-1, 0, 0], w: 0.07,  h: 0.09, depth: 0.06, tc: PI / 2 },
+  { id: 'arm-h',    name: 'Höger ärm',       garment: 'T-shirt', size: '10 × 18 cm', start: 1500, layer: 'shirt', o: [-1, 1.369, 0.026],   d: [1, 0, 0],  w: 0.07,  h: 0.09, depth: 0.06, tc: -PI / 2 },
+  { id: 'lar-v',    name: 'Vänster lår',     garment: 'Shorts', size: '12 × 22 cm', start: 2000, layer: 'pants', o: [0.13, 0.75, 1],      d: [0, 0, -1], w: 0.09,  h: 0.12, depth: 0.08, tc: 0.05 },
+  { id: 'lar-h',    name: 'Höger lår',       garment: 'Shorts', size: '12 × 22 cm', start: 2000, layer: 'pants', o: [-0.13, 0.75, 1],     d: [0, 0, -1], w: 0.09,  h: 0.12, depth: 0.08, tc: -0.05 },
+  { id: 'ben-v',    name: 'Vänster sida',    garment: 'Shorts', size: '10 × 16 cm', start: 1000, layer: 'pants', o: [1, 0.77, 0.0],       d: [-1, 0, 0], w: 0.075, h: 0.11, depth: 0.07, tc: PI / 2 },
+  { id: 'ben-h',    name: 'Höger sida',      garment: 'Shorts', size: '10 × 16 cm', start: 1000, layer: 'pants', o: [-1, 0.77, 0.0],      d: [1, 0, 0],  w: 0.075, h: 0.11, depth: 0.07, tc: -PI / 2 },
+  { id: 'bakficka', name: 'Baksida',         garment: 'Shorts', size: '14 × 12 cm', start: 1200, layer: 'pants', o: [0.085, 0.86, -1],    d: [0, 0, 1],  w: 0.09,  h: 0.075, depth: 0.06, tc: PI - 0.4 },
 ];
 const kr = n => Math.round(n).toLocaleString('sv-SE') + ' kr';
 
@@ -375,10 +375,11 @@ window.Fig = (() => {
   }
   const knit = fabricMap('knit'), denim = fabricMap('denim'), strands = fabricMap('hair');
 
-  const shirt = new THREE.MeshPhysicalMaterial({ color: 0xf1f0eb, roughness: 0.92, sheen: 0.6, sheenRoughness: 0.8, sheenColor: 0xffffff,
+  const shirt = new THREE.MeshPhysicalMaterial({ color: 0x111214, roughness: 0.7, sheen: 0.3, sheenRoughness: 0.6, sheenColor: 0x5a606c,
     bumpMap: knit, bumpScale: 0.012, side: THREE.DoubleSide });
-  const pants = new THREE.MeshPhysicalMaterial({ color: 0x3a4d73, roughness: 0.88, sheen: 0.5, sheenRoughness: 0.7, sheenColor: 0x6b82b3,
-    bumpMap: denim, bumpScale: 0.004, side: THREE.DoubleSide });
+  const pants = new THREE.MeshPhysicalMaterial({ color: 0x0e0f11, roughness: 0.6, sheen: 0.35, sheenRoughness: 0.55, sheenColor: 0x5a606c,
+    bumpMap: knit, bumpScale: 0.006, side: THREE.DoubleSide });
+  const sockMat = new THREE.MeshPhysicalMaterial({ color: 0xf2f2ef, roughness: 0.95, sheen: 0.5, sheenColor: 0xffffff, bumpMap: knit, bumpScale: 0.01 });
   const skin = new THREE.MeshPhysicalMaterial({ color: 0xd59d7c, roughness: 0.55, sheen: 0.35, sheenRoughness: 0.5, sheenColor: 0xff9f86, clearcoat: 0.04 });
   skin.onBeforeCompile = sh => {
     sh.vertexShader = sh.vertexShader
@@ -456,8 +457,39 @@ roughnessFactor *= 0.85 + 0.3 * skNoise(vSkinPos * 90.0);`);
   eyeTex.encoding = THREE.sRGBEncoding; eyeTex.anisotropy = 8;
   const eyeMat = new THREE.MeshPhysicalMaterial({ map: eyeTex, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.03 });
   const corneaLayer = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, roughness: 0, clearcoat: 1, clearcoatRoughness: 0, depthWrite: false });
-  const layerMats = { skin, face: skin, arms: skin, eyes: eyeMat, cornea: corneaLayer, shirt, pants, shoes: shoeMat, soles: soleMat, hair, strands: strandMat };
-  for (const m of Object.values(layerMats)) m.vertexColors = true;
+  const motion = { uTime: { value: 0 }, uNeck: { value: new THREE.Vector3(-0.012, 1.595, 0.012) }, uOn: { value: reduce ? 0 : 1 } };
+  const MOTION_COMMON = `
+uniform float uTime; uniform vec3 uNeck; uniform float uOn;
+mat3 mRot(vec3 e) {
+  float cx = cos(e.x), sx = sin(e.x), cy = cos(e.y), sy = sin(e.y), cz = cos(e.z), sz = sin(e.z);
+  return mat3(cy, 0., -sy, 0., 1., 0., sy, 0., cy) * mat3(1., 0., 0., 0., cx, sx, 0., -sx, cx) * mat3(cz, sz, 0., -sz, cz, 0., 0., 0., 1.);
+}
+float headW(vec3 p) { return uOn * smoothstep(uNeck.y - 0.01, uNeck.y + 0.07, p.y) * (1.0 - smoothstep(0.14, 0.2, abs(p.x - uNeck.x))); }
+vec3 headE() { return vec3(0.025 * sin(uTime * 0.53 + 1.0) - 0.01, 0.075 * sin(uTime * 0.37) + 0.03 * sin(uTime * 0.91), 0.015 * sin(uTime * 0.29 + 2.0)); }
+float breath() { return 0.5 + 0.5 * sin(uTime * 1.3); }
+float chestW(vec3 p) { return uOn * smoothstep(1.05, 1.25, p.y) * (1.0 - smoothstep(1.42, 1.52, p.y)) * (1.0 - smoothstep(0.16, 0.24, abs(p.x))); }
+float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoothstep(uNeck.y - 0.01, uNeck.y + 0.07, p.y)); }`;
+  function addMotion(m) {
+    const prev = m.onBeforeCompile;
+    m.onBeforeCompile = (sh, r) => {
+      if (prev) prev(sh, r);
+      Object.assign(sh.uniforms, motion);
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\n' + MOTION_COMMON)
+        .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nobjectNormal = mRot(headE() * headW(position)) * objectNormal;')
+        .replace('#include <begin_vertex>', `#include <begin_vertex>
+{
+  float hw = headW(position);
+  transformed = uNeck + mRot(headE() * hw) * (transformed - uNeck);
+  float b = breath();
+  transformed += normal * (0.0022 * b * chestW(position));
+  transformed.y += 0.0018 * b * shoulderW(position);
+}`);
+    };
+    m.customProgramCacheKey = () => 'motion-' + m.uuid;
+  }
+  const layerMats = { skin, face: skin, arms: skin, eyes: eyeMat, cornea: corneaLayer, shirt, pants, socks: sockMat, shoes: shoeMat, soles: soleMat, hair, strands: strandMat };
+  for (const m of new Set(Object.values(layerMats))) { m.vertexColors = true; addMotion(m); }
   skin.color.set(0xffffff);
   const meshes = {}, patches = new Map(), leaders = new Map();
   const loading = document.getElementById('fig-loading');
@@ -512,6 +544,7 @@ roughnessFactor *= 0.85 + 0.3 * skNoise(vSkinPos * 90.0);`);
       const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.85, emissive: 0x2b48ff, emissiveIntensity: 0,
         polygonOffset: true, polygonOffsetFactor: -4, depthWrite: false });
       const mesh = new THREE.Mesh(geo, mat);
+      addMotion(mat);
       mesh.receiveShadow = true; mesh.userData.id = sp.id; mesh.renderOrder = 2;
       fig.add(mesh);
       patches.set(sp.id, { mesh, canvas, ctx: canvas.getContext('2d'), tex, sp });
@@ -535,12 +568,12 @@ roughnessFactor *= 0.85 + 0.3 * skNoise(vSkinPos * 90.0);`);
     leaders.set(id, leader);
     if (!patches.has(id)) return;
     const { canvas: c, ctx, tex, sp } = patches.get(id);
-    const W = c.width, H = c.height, m = 8, onShirt = sp.garment === 'Tröja';
+    const W = c.width, H = c.height, m = 8;
     ctx.clearRect(0, 0, W, H);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     try { ctx.fontStretch = 'condensed'; } catch (e) {}
     if (leader) {
-      const ink = onShirt ? '#1b2130' : '#f3f1ea';
+      const ink = '#f3f1ea';
       ctx.fillStyle = ink;
       const text = leader.brand.toUpperCase(), words = text.split(/\s+/);
       fit(ctx, text, 900, DISPLAY, 130, W * 0.8);
@@ -615,6 +648,7 @@ roughnessFactor *= 0.85 + 0.3 * skNoise(vSkinPos * 90.0);`);
   new ResizeObserver(resize).observe(stage); resize();
 
   let last = performance.now();
+  let lastIdle = 0;
   (function loop(now) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     if (tween) {
@@ -631,6 +665,13 @@ roughnessFactor *= 0.85 + 0.3 * skNoise(vSkinPos * 90.0);`);
       moved = true;
     }
     if (controls.update()) moved = true;
+    if (!reduce && meshes.skin && now - lastIdle > 33) {
+      const t = now / 1000;
+      motion.uTime.value = t;
+      fig.rotation.z = 0.005 * Math.sin(t * 0.41);
+      fig.rotation.x = 0.003 * Math.sin(t * 0.33 + 1);
+      lastIdle = now; moved = true;
+    }
     if (moved || dirty) { renderer.render(scene, camera); dirty = false; }
     requestAnimationFrame(loop);
   })(last);

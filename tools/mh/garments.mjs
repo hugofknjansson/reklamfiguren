@@ -59,7 +59,7 @@ export function buildGarments(body, tris, log, sealTris = []) {
   // ----- T-shirt -----
   const inArm = (p, s, from) => { const S = side[s]; return seg(p, add(S.sh, mul(S.ud, from)), S.hand).d < 0.072; };
   const torso = mask(G, solid, (x, y, z, q) => y > hemY - 0.08 && y < neckY - 0.01 && !armZone[q]);
-  const torsoSD = sampler(G, blur(G, closing(G, torso, 0.019), 3));
+  const torsoSD = sampler(G, blur(G, closing(G, torso, 0.013), 3));
   log('shirt torso closed');
   const sleeveSolid = mask(G, solid, (x, y, z, q) => {
     const p = [x, y, z];
@@ -73,19 +73,19 @@ export function buildGarments(body, tris, log, sealTris = []) {
   const neckDist = p => seg(p, neckA, neckB).d;
   const shirt = (x, y, z) => {
     const p = [x, y, z], ang = atan2(x, z);
-    let d = torsoSD(x, y, z) - 0.013;
+    let d = torsoSD(x, y, z) - 0.009;
     d = smax(d, -armSD(x, y, z) + (y < side[1].sh[1] - 0.16 ? 0.012 : -0.002), 0.008);
     for (const s of [1, -1]) {
       const t = along(s, p);
-      let sl = sleeveSD(x, y, z) - 0.012 - 0.005 * smoothstep(0.1, 0.02, t);
-      sl -= 0.0035 * gauss(t, 0.128, 0.006);
-      sl = smax(sl, t - 0.134, 0.004);
+      let sl = sleeveSD(x, y, z) - 0.0085 - 0.004 * smoothstep(0.1, 0.02, t);
+      sl -= 0.003 * gauss(t, 0.144, 0.006);
+      sl = smax(sl, t - 0.15, 0.004);
       d = smin(d, sl, 0.03);
       const lat = s * x;
       d -= 0.0022 * sin(((y - side[s].sh[1] + 0.12) + (lat - 0.13) * 0.9) * 140) * gauss(lat, 0.13, 0.035) * gauss(y, side[s].sh[1] - 0.12, 0.05) * (z > -0.02 ? 1 : 0.4);
     }
-    d += 0.003 * sin(ang * 8 + y * 25 + 2 * vnoise(x * 30, y * 30, z * 30)) * gauss(y, hemY + 0.08, 0.045);
-    d += 0.0018 * sin(ang * 5 + 1) * gauss(y, hemY + 0.24, 0.06);
+    d += 0.002 * sin(ang * 8 + y * 25 + 2 * vnoise(x * 30, y * 30, z * 30)) * gauss(y, hemY + 0.07, 0.04);
+    d += 0.001 * sin(ang * 5 + 1) * gauss(y, hemY + 0.24, 0.06);
     d -= 0.0022 * gauss(y, hemY + 0.012, 0.005);
     d = smax(d, hemY - y, 0.008);
     const nd = neckDist(p);
@@ -104,28 +104,17 @@ export function buildGarments(body, tris, log, sealTris = []) {
     const r1 = seg(p, S.hip, S.knee), r2 = seg(p, S.knee, S.ankle), q = (r1.d < r2.d ? r1 : r2).q;
     return { ang: atan2((x => x)(p[0] - q[0]) * (S === side[1] ? 1 : -1), p[2] - q[2]), q };
   };
+  const shortsHem = (side[1].knee[1] + side[-1].knee[1]) / 2 + 0.085;
   const pants = (x, y, z) => {
     const p = [x, y, z], S = legOf(x), { ang } = legAngle(S, p);
-    const loose = 0.008 + 0.011 * smoothstep(S.knee[1], S.ankle[1] + 0.05, y);
+    const loose = 0.01 + 0.012 * smoothstep(shortsHem + 0.16, shortsHem, y);
     let d = lowerSD(x, y, z) - loose;
-    d += 0.0035 * sin(ang * 5 + 0.5) * gauss(y, S.knee[1], 0.035) * (S === side[1] ? 1.6 : 0.7);
-    d += 0.0055 * sin(ang * 6 + y * 80) * gauss(y, pantsHem + 0.03, 0.03);
-    d -= 0.0013 * gauss(abs(ang), PI / 2, 0.06) * (y < hemY ? 1 : 0);
-    d -= 0.0011 * gauss(abs(ang), PI / 2 + 0.55, 0.05) * (y < hemY - 0.12 ? 1 : 0);
-    if (z < 0) for (const s of [1, -1]) {
-      const px = s * x - 0.07, py = y - (hemY - 0.045);
-      if (abs(px) < 0.05 - max(0, -py - 0.02) * 0.4 && py < 0.045 && py > -0.05) d -= 0.0022;
-    }
-    if (z > 0) for (let k = 0; k < 4; k++) {
-      const s = x >= 0 ? 1 : -1, w = (y - (hemY - 0.13)) + (s * x - 0.03) * (0.35 + k * 0.25);
-      d -= 0.0012 * gauss(w, 0, 0.004) * gauss(s * x, 0.07, 0.04) * gauss(y, hemY - 0.15, 0.04);
-    }
-    d = smax(d, y - waistY, 0.004);
-    return smax(d, pantsHem - y, 0.004);
-  };
-  const denimWash = (x, y, z) => {
-    const S = legOf(x), { ang } = legAngle(S, [x, y, z]);
-    return clamp(gauss(ang, 0, 0.8) * (0.55 * gauss(y, (S.hip[1] + S.knee[1]) / 2, 0.1) + 0.45 * gauss(y, S.knee[1], 0.05)) + 0.15 * vnoise(x * 60, y * 25, z * 60), 0, 1);
+    d += 0.0025 * sin(ang * 4 + y * 60) * gauss(y, shortsHem + 0.06, 0.04);
+    d += 0.002 * sin(ang * 3 + 1.3) * gauss(y, shortsHem + 0.02, 0.02);
+    d -= 0.0012 * gauss(abs(ang), PI / 2, 0.06) * (y < hemY ? 1 : 0);
+    d -= 0.002 * gauss(y, shortsHem + 0.01, 0.004);
+    d = smax(d, y - (hemY + 0.035), 0.004);
+    return smax(d, shortsHem - y, 0.005);
   };
 
   // ----- sneakers, sized from the feet -----
@@ -204,5 +193,6 @@ export function buildGarments(body, tris, log, sealTris = []) {
   const shoeBox = { lo: [min(...feet.map(F => F.o[0])) - 0.12, 0, min(...feet.map(F => F.o[2])) - 0.05], hi: [max(...feet.map(F => F.o[0])) + 0.12, 0.14, max(...feet.map(F => F.o[2] + F.f[2] * F.len)) + 0.06] };
   const bodySD = sampler(G, blur(G, signedDistance(G, solid), 1));
   log('body field');
-  return { shirt, pants, shoes, soles, denimWash, shoeColor, soleColor, shirtUV, pantsUV, shoeBox, bodySD, hemY, waistY, neckY, side };
+  const socks = (x, y, z) => smax(smax(bodySD(x, y, z) - 0.004 - 0.0012 * gauss(y, 0.128, 0.004), y - 0.132, 0.004), 0.035 - y, 0.004);
+  return { shirt, pants, socks, shortsHem, shoes, soles, shoeColor, soleColor, shirtUV, pantsUV, shoeBox, bodySD, hemY, waistY, neckY, side };
 }
