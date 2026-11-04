@@ -400,11 +400,17 @@ vec3 skGrad(vec3 p) { float e = 0.35, n = skNoise(p); return vec3(skNoise(p + ve
   vec3 gv = (viewMatrix * vec4(g, 0.0)).xyz;
   normal = normalize(normal - (gv - dot(gv, normal) * normal));
 }`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+{
+  float dens = smoothstep(0.35, 0.75, skNoise(vSkinPos * 14.0));
+  float spot = smoothstep(0.8 - 0.1 * dens, 0.88 - 0.1 * dens, skNoise(vSkinPos * 430.0));
+  diffuseColor.rgb *= mix(vec3(1.0), vec3(0.8, 0.62, 0.5), spot * (0.25 + 0.4 * dens));
+}`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
 roughnessFactor *= 0.85 + 0.3 * skNoise(vSkinPos * 90.0);`);
   };
   const lipMat = new THREE.MeshPhysicalMaterial({ color: 0xb06a62, roughness: 0.4, clearcoat: 0.2 });
-  const hair = new THREE.MeshStandardMaterial({ color: 0x4a3120, roughness: 0.75, bumpMap: strands, bumpScale: 0.02 });
+  const hair = new THREE.MeshStandardMaterial({ color: 0xa65a2c, roughness: 0.75, bumpMap: strands, bumpScale: 0.02 });
   const shoeMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.62, clearcoat: 0.15 });
   const soleMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.75 });
   const eyeWhite = new THREE.MeshPhysicalMaterial({ color: 0xe6ded5, roughness: 0.15, clearcoat: 1 });
@@ -439,14 +445,14 @@ roughnessFactor *= 0.85 + 0.3 * skNoise(vSkinPos * 90.0);`);
   }
   const irisMat = new THREE.MeshPhysicalMaterial({ map: irisTexture(), roughness: 0.35 });
   const corneaMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.0, transmission: 1, thickness: 0.0005, ior: 1.376, clearcoat: 1, clearcoatRoughness: 0 });
-  const strandMat = new THREE.MeshStandardMaterial({ color: 0x5e3f27, map: strandTexture(), alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.5 });
+  const strandMat = new THREE.MeshStandardMaterial({ color: 0xc06a34, map: strandTexture(), alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.5 });
   const beltMat = new THREE.MeshPhysicalMaterial({ color: 0x5a3a24, roughness: 0.5, clearcoat: 0.3 });
 
   function shade(m) { m.castShadow = true; m.receiveShadow = true; return m; }
   const sph = (r, mat) => shade(new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), mat));
 
   const fig = new THREE.Group(); scene.add(fig);
-  const eyeTex = new THREE.TextureLoader().load('eye.png', () => { dirty = true; });
+  const eyeTex = new THREE.TextureLoader().load('eye.jpg', () => { dirty = true; });
   eyeTex.encoding = THREE.sRGBEncoding; eyeTex.anisotropy = 8;
   const eyeMat = new THREE.MeshPhysicalMaterial({ map: eyeTex, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.03 });
   const corneaLayer = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, roughness: 0, clearcoat: 1, clearcoatRoughness: 0, depthWrite: false });

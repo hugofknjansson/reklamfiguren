@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { MH, parseObj, applyTarget, loadRig, pose, fitProxy } from './mh.mjs';
 
 export const SOLE = 0.026;
-const HEIGHT = 1.78;
+const HEIGHT = 1.8;
 
 const norm = a => { const l = Math.hypot(...a) || 1; return a.map(x => x / l); };
 const sub = (a, b) => a.map((x, i) => x - b[i]);
@@ -13,8 +13,8 @@ export function buildBody() {
   const obj = parseObj(readFileSync(MH + '3dobjs/base.obj', 'utf8'));
   const v = obj.v;
   applyTarget(v, MH + 'targets/caucasian-male-young.target', 1);
-  applyTarget(v, MH + 'targets/universal-male-young-averagemuscle-averageweight.target', 0.72);
-  applyTarget(v, MH + 'targets/universal-male-young-maxmuscle-averageweight.target', 0.28);
+  applyTarget(v, MH + 'targets/universal-male-young-averagemuscle-averageweight.target', 0.25);
+  applyTarget(v, MH + 'targets/universal-male-young-maxmuscle-averageweight.target', 0.75);
   const rig = loadRig(v);
   const B = rig.bones, dir = n => norm(sub(B[n].tail, B[n].head));
 

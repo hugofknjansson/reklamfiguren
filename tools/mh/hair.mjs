@@ -74,7 +74,7 @@ export function buildHead(body, tris, eyeTris, log) {
     if (A > 0.058 && c > -0.005 && c < 0.035) line = min(line, -0.026);
     return line;
   }
-  const volume = (a, b, c) => 0.0045 + 0.008 * smoothstep(0.0, 0.075, b) + 0.004 * smoothstep(0.03, 0.08, c) * smoothstep(0.04, 0.08, b);
+  const volume = (a, b, c) => 0.004 + 0.015 * smoothstep(0.0, 0.08, b) + 0.007 * smoothstep(0.03, 0.08, c) * smoothstep(0.04, 0.08, b) + 0.003 * vnoise(a * 60, b * 60, c * 60) * smoothstep(0.02, 0.07, b);
   const thickness = (a, b, c) => smoothstep(0, 0.02, b - hairline(a, b, c)) * volume(a, b, c);
   const capL = (a, b, c) => headL(a, b, c) - smoothstep(-0.004, 0.012, b - hairline(a, b, c)) * (volume(a, b, c) + 0.0035) + 0.004 - 0.0007 * vnoise(a * 400, b * 400, c * 400);
   const hairCap = (x, y, z) => { const [a, b, c] = toL([x, y, z]); return capL(a, b, c); };
@@ -84,8 +84,8 @@ export function buildHead(body, tris, eyeTris, log) {
   const PART = 0.03;
   const growth = ([a, b, c]) => {
     const side = a > PART ? 1 : -1;
-    if (b > 0.03) { const front = smoothstep(0.03, 0.085, c); return norm([side * (0.35 + 0.35 * front), 0.2 + 0.5 * front, -0.9 + 0.4 * front]); }
-    return norm([side * 0.15, -0.8, -0.55]);
+    if (b > 0.03) { const front = smoothstep(0.03, 0.085, c); return norm([side * (0.22 + 0.25 * front), 0.35 + 0.55 * front, -0.85 + 0.25 * front]); }
+    return norm([side * 0.2, -0.55, -0.7]);
   };
 
   function strands() {
@@ -104,13 +104,13 @@ export function buildHead(body, tris, eyeTris, log) {
       }
     };
     let made = 0, tries = 0;
-    while (made < 6500 && tries < 90000) {
+    while (made < 7500 && tries < 110000) {
       tries++;
       const th = Rn() * 2 * PI, ph = Math.acos(1 - 1.7 * Rn());
       let p = toSurface([sin(ph) * cos(th) * 0.1, cos(ph) * 0.1, sin(ph) * sin(th) * 0.1], 0);
       const [a, b, c] = p;
       if (b - hairline(a, b, c) < 0.002 || (abs(a - PART) < 0.0025 && b > 0.06)) continue;
-      const top = smoothstep(-0.01, 0.05, b), L = (0.01 + 0.024 * top) * (0.8 + 0.4 * Rn());
+      const top = smoothstep(-0.01, 0.05, b), L = (0.012 + 0.045 * top) * (0.75 + 0.5 * Rn()), phase = Rn() * 6.28, curl = 0.55 + 0.45 * Rn();
       const segs = 5, path = [], nrms = [];
       let q = p, dir = growth(p);
       for (let i = 0; i < segs; i++) {
@@ -119,10 +119,11 @@ export function buildHead(body, tris, eyeTris, log) {
         const nn = grad(headL, q);
         path.push(q); nrms.push(nn);
         dir = norm(sub(dir, mul(nn, dot(dir, nn))));
-        dir = norm(add(dir, [0.15 * (Rn() - 0.5), -0.12 * t * (1 - top), 0.15 * (Rn() - 0.5)]));
+        const across = norm(cross(dir, nn));
+        dir = norm(add(add(dir, mul(across, curl * top * sin(i * 2.1 + phase))), [0.12 * (Rn() - 0.5), -0.1 * t * (1 - top), 0.12 * (Rn() - 0.5)]));
         q = add(q, mul(dir, L / (segs - 1)));
       }
-      card(path, nrms, 0.0045 + 0.002 * Rn(), 0.8 + 0.2 * Rn(), 0);
+      card(path, nrms, 0.005 + 0.0025 * Rn(), 0.75 + 0.25 * Rn(), 0);
       made++;
     }
     for (const E of eyes) {
@@ -161,7 +162,46 @@ export function buildHead(body, tris, eyeTris, log) {
         card(path, [nn, nn, nn], 0.0009, 0.22, 0);
       }
     }
+    // full short beard and moustache, rooted on skin triangles inside the beard area
+    const btris = [], areas = [];
+    let total = 0;
+    for (const [i0, i1, i2] of tris) {
+      const P0 = toL([body.v[i0 * 3], body.v[i0 * 3 + 1], body.v[i0 * 3 + 2]]), P1 = toL([body.v[i1 * 3], body.v[i1 * 3 + 1], body.v[i1 * 3 + 2]]), P2 = toL([body.v[i2 * 3], body.v[i2 * 3 + 1], body.v[i2 * 3 + 2]]);
+      const C = mul(add(add(P0, P1), P2), 1 / 3);
+      if (Math.hypot(...C) > 0.2 || beardMask(...C) <= 0) continue;
+      const ar = Math.hypot(...cross(sub(P1, P0), sub(P2, P0))) / 2;
+      btris.push([P0, P1, P2]); total += ar; areas.push(total);
+    }
+    for (let bm = 0; bm < 15000 && btris.length; bm++) {
+      const r = Rn() * total; let lo = 0, hi = areas.length - 1;
+      while (lo < hi) { const m = (lo + hi) >> 1; if (areas[m] < r) lo = m + 1; else hi = m; }
+      const [P0, P1, P2] = btris[lo]; let u = Rn(), w = Rn(); if (u + w > 1) { u = 1 - u; w = 1 - w; }
+      const p = add(P0, add(mul(sub(P1, P0), u), mul(sub(P2, P0), w)));
+      const [a, b, c] = p, mous = b > slit[1];
+      let dir = mous ? norm([sign0(a) * 0.6, -1, 0.15]) : norm([sign0(a) * 0.15, -1, 0.35]);
+      const path = [], nrms = [], L = (mous ? 0.008 : 0.011) * (0.7 + 0.6 * Rn());
+      let q = p;
+      for (let k = 0; k < 3; k++) {
+        q = toSurface(q, 0.0012 + 0.0016 * k);
+        const nn = grad(headL, q); path.push(q); nrms.push(nn);
+        dir = norm(sub(dir, mul(nn, dot(dir, nn)))); q = add(q, mul(add(dir, mul(nn, 0.25)), L / 2));
+      }
+      card(path, nrms, 0.0032, 0.8 + 0.2 * Rn(), 0);
+    }
     return out;
+  }
+  const sign0 = v => (v >= 0 ? 1 : -1);
+  function beardMask(a, b, c) {
+    if (!slit) return 0;
+    const A = abs(a);
+    const lip = (a / 0.026) ** 2 + ((b - slit[1]) / (b > slit[1] ? 0.0068 : 0.012)) ** 2;
+    if (lip < 1.1 || c < -0.035) return 0;
+    if (A < 0.03 && b > slit[1] + 0.003) return b < noseTip[1] - 0.009 && c > noseTip[2] - 0.045 && !(A < 0.009 && b > noseTip[1] - 0.016) ? 1 : 0;
+    const cheek = A < 0.03 ? slit[1] + 0.012 : slit[1] + 0.012 + (A - 0.03) / 0.035 * (-0.022 - slit[1] - 0.012);
+    if (b > cheek) return 0;
+    if (b < slit[1] - 0.095) return 0;
+    if (b < slit[1] - 0.06 && c < -0.005) return 0;
+    return 1;
   }
   // ---------- skin colour ----------
   let noseTip = null, slit = null;
@@ -174,7 +214,7 @@ export function buildHead(body, tris, eyeTris, log) {
     if (abs(l[0]) < 0.004 && l[1] < noseTip[1] - 0.025 && l[1] > noseTip[1] - 0.04 && l[2] > noseTip[2] - 0.04 && (!slit || l[2] < slit[2])) slit = l;
   }
   const toLin = c => (c / 255) ** 2.2, rgb = (r, g, b) => [r, g, b].map(toLin);
-  const SKIN = rgb(198, 140, 108), SKIN2 = rgb(212, 158, 124), RED = rgb(196, 106, 92), LIP = rgb(170, 98, 90), STUB = rgb(118, 96, 90), UNDER = rgb(160, 112, 98);
+  const SKIN = rgb(222, 164, 134), SKIN2 = rgb(232, 180, 152), RED = rgb(214, 116, 98), LIP = rgb(186, 106, 96), STUB = rgb(196, 112, 62), UNDER = rgb(192, 134, 120);
   const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * clamp(t, 0, 1));
   const g2 = (x, y, sx, sy) => Math.exp(-((x / sx) ** 2 + (y / sy) ** 2));
   function skinColor(x, y, z) {
@@ -188,10 +228,10 @@ export function buildHead(body, tris, eyeTris, log) {
     const lip = ((a / 0.026) ** 2 + ((b - slit[1]) / (b > slit[1] ? 0.0095 : 0.012)) ** 2);
     if (c > slit[2] - 0.006) col = mix(col, LIP, 0.85 * smoothstep(1.15, 0.7, lip));
     for (const E of eyes) col = mix(col, UNDER, 0.3 * g2(a - E.l[0], b - E.l[1] + 0.016, 0.014, 0.006) * (c > E.l[2] - 0.01 ? 1 : 0));
-    const beard = (b < slit[1] + 0.024 && b > slit[1] - 0.075 && c > -0.025) && !(lip < 1.25) && !(b > slit[1] + 0.004 && abs(a) > 0.03 && b > noseTip[1] - 0.03);
+    const beard = beardMask(a, b, c) > 0;
     if (beard) {
       const edge = smoothstep(-0.03, 0.0, c) * smoothstep(slit[1] + 0.024, slit[1] + 0.012, b);
-      col = mix(col, STUB, 0.3 * edge * (0.6 + 0.4 * vnoise(a * 900, b * 900, c * 900)));
+      col = mix(col, STUB, 0.45 * (0.75 + 0.25 * vnoise(a * 900, b * 900, c * 900)));
     }
     return col;
   }
