@@ -17,13 +17,41 @@ const footDist = (x, z) => Math.min(...ankles.map(([ax, az]) => {
   const t = Math.max(0, Math.min(1, (z - (az - 0.05)) / 0.3));
   return Math.hypot(x - ax, z - (az - 0.05 + 0.3 * t));
 }));
+// fit the floor plane y = a x + b z + c to low points away from the feet, then measure height above it
+let Sxx = 0, Sxz = 0, Szz = 0, Sx = 0, Sz = 0, S1 = 0, Sxy = 0, Szy = 0, Sy = 0;
+for (let i = 0; i < n; i++) {
+  const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2];
+  if (y > 0.05 || footDist(x, z) < 0.13) continue;
+  Sxx += x * x; Sxz += x * z; Szz += z * z; Sx += x; Sz += z; S1++; Sxy += x * y; Szy += z * y; Sy += y;
+}
+const solve3 = (A, r) => {
+  const M = A.map((row, i) => [...row, r[i]]);
+  for (let i = 0; i < 3; i++) {
+    let p = i; for (let k = i + 1; k < 3; k++) if (Math.abs(M[k][i]) > Math.abs(M[p][i])) p = k;
+    [M[i], M[p]] = [M[p], M[i]];
+    for (let k = i + 1; k < 3; k++) { const f = M[k][i] / M[i][i]; for (let j = i; j < 4; j++) M[k][j] -= f * M[i][j]; }
+  }
+  const x = [0, 0, 0];
+  for (let i = 2; i >= 0; i--) { let v = M[i][3]; for (let j = i + 1; j < 3; j++) v -= M[i][j] * x[j]; x[i] = v / M[i][i]; }
+  return x;
+};
+const [pa, pb, pc] = S1 > 50 ? solve3([[Sxx, Sxz, Sx], [Sxz, Szz, Sz], [Sx, Sz, S1]], [Sxy, Szy, Sy]) : [0, 0, 0];
+const hgt = i => P[i * 3 + 1] - (pa * P[i * 3] + pb * P[i * 3 + 2] + pc);
+for (let i = 0; i < n; i++) P[i * 3 + 1] = hgt(i);
+console.log(`floor plane tilt x ${(pa * 100).toFixed(1)} cm/m, z ${(pb * 100).toFixed(1)} cm/m, offset ${pc.toFixed(3)} from ${S1} points`);
+
 const keep = new Uint8Array(n);
 for (let i = 0; i < n; i++) {
   const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2], d = footDist(x, z);
-  keep[i] = !((y < 0.03 && d > 0.065) || (y < 0.14 && d > 0.075 + (y - 0.03) * 0.3));
+  keep[i] = y > 0.14 || (y > 0.04 && d < 0.075 + (y - 0.04) * 0.25) || (y > 0.007 && d < 0.058);
 }
 let tris = [];
-for (let t = 0; t < T.length; t += 3) if (keep[T[t]] && keep[T[t + 1]] && keep[T[t + 2]]) tris.push([T[t], T[t + 1], T[t + 2]]);
+for (let t = 0; t < T.length; t += 3) {
+  const a = T[t], b = T[t + 1], c = T[t + 2];
+  if (!(keep[a] && keep[b] && keep[c])) continue;
+  if (Math.max(P[a * 3 + 1], P[b * 3 + 1], P[c * 3 + 1]) < 0.016) continue;
+  tris.push([a, b, c]);
+}
 
 // largest connected component
 const parent = Int32Array.from({ length: n }, (_, i) => i);

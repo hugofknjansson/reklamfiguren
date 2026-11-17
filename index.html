@@ -301,16 +301,16 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
 <script>
 const PI = Math.PI;
 const SPOTS = [
-  { id: 'brost',    name: 'Bröst',           garment: 'T-shirt', size: '30 × 20 cm', start: 5000, layer: 'shirt', o: [0, 1.33, 1],         d: [0, 0, -1], w: 0.24,  h: 0.15, depth: 0.1,  tc: 0 },
-  { id: 'mage',     name: 'Mage',            garment: 'T-shirt', size: '30 × 14 cm', start: 2500, layer: 'shirt', o: [0, 1.12, 1],         d: [0, 0, -1], w: 0.22,  h: 0.12, depth: 0.1,  tc: 0 },
-  { id: 'rygg',     name: 'Rygg',            garment: 'T-shirt', size: '34 × 30 cm', start: 4000, layer: 'shirt', o: [0, 1.25, -1],        d: [0, 0, 1],  w: 0.27,  h: 0.24, depth: 0.1,  tc: PI },
-  { id: 'arm-v',    name: 'Vänster ärm',     garment: 'T-shirt', size: '10 × 18 cm', start: 1500, layer: 'shirt', o: [1, 1.384, 0.025],    d: [-1, 0, 0], w: 0.07,  h: 0.09, depth: 0.06, tc: PI / 2 },
-  { id: 'arm-h',    name: 'Höger ärm',       garment: 'T-shirt', size: '10 × 18 cm', start: 1500, layer: 'shirt', o: [-1, 1.369, 0.026],   d: [1, 0, 0],  w: 0.07,  h: 0.09, depth: 0.06, tc: -PI / 2 },
-  { id: 'lar-v',    name: 'Vänster lår',     garment: 'Shorts', size: '12 × 22 cm', start: 2000, layer: 'pants', o: [0.13, 0.75, 1],      d: [0, 0, -1], w: 0.09,  h: 0.12, depth: 0.08, tc: 0.05 },
-  { id: 'lar-h',    name: 'Höger lår',       garment: 'Shorts', size: '12 × 22 cm', start: 2000, layer: 'pants', o: [-0.13, 0.75, 1],     d: [0, 0, -1], w: 0.09,  h: 0.12, depth: 0.08, tc: -0.05 },
-  { id: 'ben-v',    name: 'Vänster sida',    garment: 'Shorts', size: '10 × 16 cm', start: 1000, layer: 'pants', o: [1, 0.77, 0.0],       d: [-1, 0, 0], w: 0.075, h: 0.11, depth: 0.07, tc: PI / 2 },
-  { id: 'ben-h',    name: 'Höger sida',      garment: 'Shorts', size: '10 × 16 cm', start: 1000, layer: 'pants', o: [-1, 0.77, 0.0],      d: [1, 0, 0],  w: 0.075, h: 0.11, depth: 0.07, tc: -PI / 2 },
-  { id: 'bakficka', name: 'Baksida',         garment: 'Shorts', size: '14 × 12 cm', start: 1200, layer: 'pants', o: [0.085, 0.86, -1],    d: [0, 0, 1],  w: 0.09,  h: 0.075, depth: 0.06, tc: PI - 0.4 },
+  { id: 'brost',    name: 'Bröst',           garment: 'T-shirt', size: '30 × 20 cm', start: 5000, layer: 'body', o: [-0.035, 1.32, 1],    d: [0, 0, -1], w: 0.24,  h: 0.15, depth: 0.12, tc: 0 },
+  { id: 'mage',     name: 'Mage',            garment: 'T-shirt', size: '30 × 14 cm', start: 2500, layer: 'body', o: [-0.035, 1.1, 1],     d: [0, 0, -1], w: 0.22,  h: 0.12, depth: 0.12, tc: 0 },
+  { id: 'rygg',     name: 'Rygg',            garment: 'T-shirt', size: '34 × 30 cm', start: 4000, layer: 'body', o: [-0.035, 1.27, -1],   d: [0, 0, 1],  w: 0.27,  h: 0.24, depth: 0.12, tc: PI },
+  { id: 'arm-v',    name: 'Vänster ärm',     garment: 'T-shirt', size: '10 × 18 cm', start: 1500, layer: 'body', o: [1, 1.33, -0.015],    d: [-1, 0, 0], w: 0.08,  h: 0.09, depth: 0.07, tc: PI / 2 },
+  { id: 'arm-h',    name: 'Höger ärm',       garment: 'T-shirt', size: '10 × 18 cm', start: 1500, layer: 'body', o: [-1, 1.33, -0.02],    d: [1, 0, 0],  w: 0.08,  h: 0.09, depth: 0.07, tc: -PI / 2 },
+  { id: 'lar-v',    name: 'Vänster lår',     garment: 'Shorts', size: '12 × 22 cm', start: 2000, layer: 'body', o: [0.085, 0.72, 1],      d: [0, 0, -1], w: 0.09,  h: 0.12, depth: 0.1,  tc: 0.05 },
+  { id: 'lar-h',    name: 'Höger lår',       garment: 'Shorts', size: '12 × 22 cm', start: 2000, layer: 'body', o: [-0.13, 0.72, 1],      d: [0, 0, -1], w: 0.09,  h: 0.12, depth: 0.1,  tc: -0.05 },
+  { id: 'ben-v',    name: 'Vänster sida',    garment: 'Shorts', size: '10 × 16 cm', start: 1000, layer: 'body', o: [1, 0.72, -0.02],      d: [-1, 0, 0], w: 0.075, h: 0.11, depth: 0.08, tc: PI / 2 },
+  { id: 'ben-h',    name: 'Höger sida',      garment: 'Shorts', size: '10 × 16 cm', start: 1000, layer: 'body', o: [-1, 0.72, -0.02],     d: [1, 0, 0],  w: 0.075, h: 0.11, depth: 0.08, tc: -PI / 2 },
+  { id: 'bakficka', name: 'Baksida',         garment: 'Shorts', size: '14 × 12 cm', start: 1200, layer: 'body', o: [0.05, 0.84, -1],      d: [0, 0, 1],  w: 0.09,  h: 0.075, depth: 0.08, tc: PI - 0.4 },
 ];
 const kr = n => Math.round(n).toLocaleString('sv-SE') + ' kr';
 
@@ -379,7 +379,7 @@ window.Fig = (() => {
     bumpMap: knit, bumpScale: 0.012, side: THREE.DoubleSide });
   const pants = new THREE.MeshPhysicalMaterial({ color: 0x0e0f11, roughness: 0.6, sheen: 0.35, sheenRoughness: 0.55, sheenColor: 0x5a606c,
     bumpMap: knit, bumpScale: 0.006, side: THREE.DoubleSide });
-  const sockMat = new THREE.MeshPhysicalMaterial({ color: 0xf2f2ef, roughness: 0.95, sheen: 0.5, sheenColor: 0xffffff, bumpMap: knit, bumpScale: 0.01 });
+  const sockMat = new THREE.MeshPhysicalMaterial({ color: 0x141518, roughness: 0.95, sheen: 0.4, sheenColor: 0x5a606c, bumpMap: knit, bumpScale: 0.01 });
   const skin = new THREE.MeshPhysicalMaterial({ color: 0xd59d7c, roughness: 0.55, sheen: 0.35, sheenRoughness: 0.5, sheenColor: 0xff9f86, clearcoat: 0.04 });
   skin.onBeforeCompile = sh => {
     sh.vertexShader = sh.vertexShader
@@ -453,11 +453,17 @@ roughnessFactor *= 0.85 + 0.3 * skNoise(vSkinPos * 90.0);`);
   const sph = (r, mat) => shade(new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), mat));
 
   const fig = new THREE.Group(); scene.add(fig);
-  const eyeTex = new THREE.TextureLoader().load('eye.jpg', () => { dirty = true; });
-  eyeTex.encoding = THREE.sRGBEncoding; eyeTex.anisotropy = 8;
-  const eyeMat = new THREE.MeshPhysicalMaterial({ map: eyeTex, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.03 });
+  const photo = (file, colour) => {
+    const t = new THREE.TextureLoader().load(file, () => { dirty = true; });
+    t.flipY = false; t.anisotropy = 8; if (colour) t.encoding = THREE.sRGBEncoding;
+    return t;
+  };
+  // The photos already contain the light they were taken in, so the scene's lights only add gentle shading on top.
+  const bodyMap = photo('scan-body.jpg', true), headMap = photo('scan-head.jpg', true);
+  const scanBody = new THREE.MeshStandardMaterial({ map: bodyMap, normalMap: photo('scan-body-n.jpg', false), color: 0xbdbdbd, emissive: 0xffffff, emissiveMap: bodyMap, emissiveIntensity: 0.2, roughness: 0.95, envMapIntensity: 0.6, toneMapped: false, side: THREE.DoubleSide });
+  const scanHead = new THREE.MeshStandardMaterial({ map: headMap, color: 0xbdbdbd, emissive: 0xffffff, emissiveMap: headMap, emissiveIntensity: 0.2, roughness: 0.92, envMapIntensity: 0.6, toneMapped: false });
   const corneaLayer = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, roughness: 0, clearcoat: 1, clearcoatRoughness: 0, depthWrite: false });
-  const motion = { uTime: { value: 0 }, uNeck: { value: new THREE.Vector3(-0.012, 1.595, 0.012) }, uOn: { value: reduce ? 0 : 1 } };
+  const motion = { uTime: { value: 0 }, uNeck: { value: new THREE.Vector3(-0.03, 1.56, 0.02) }, uOn: { value: reduce ? 0 : 1 } };
   const MOTION_COMMON = `
 uniform float uTime; uniform vec3 uNeck; uniform float uOn;
 mat3 mRot(vec3 e) {
@@ -485,7 +491,7 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
     };
     m.customProgramCacheKey = () => 'motion-' + m.uuid;
   }
-  const layerMats = { skin, face: skin, arms: skin, eyes: eyeMat, cornea: corneaLayer, shirt, pants, socks: sockMat, shoes: shoeMat, soles: soleMat, hair, strands: strandMat };
+  const layerMats = { body: scanBody, head: scanHead, skin, face: skin, arms: skin, cornea: corneaLayer, shirt, pants, socks: sockMat, shoes: shoeMat, soles: soleMat, hair, strands: strandMat };
   for (const m of new Set(Object.values(layerMats))) { m.vertexColors = true; addMotion(m); }
   skin.color.set(0xffffff);
   const meshes = {}, patches = new Map(), leaders = new Map();
@@ -516,6 +522,7 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
       g.setAttribute('normal', new THREE.BufferAttribute(new Int8Array(buf, base + L.nrm, n * 3), 3, true));
       const c8 = new Uint8Array(buf, base + L.col, n * 3);
       g.setAttribute('color', new THREE.BufferAttribute(Float32Array.from(c8, v => (v / 255) ** 2.2), 3));
+      if (L.uvq != null) g.setAttribute('uv', new THREE.BufferAttribute(new Uint16Array(buf, base + L.uvq, n * 2), 2, true));
       if (L.uv != null) g.setAttribute('uv', new THREE.BufferAttribute(Float32Array.from(new Int16Array(buf, base + L.uv, n * 2), v => v / 1000), 2));
       let ix;
       if (L.delta) { const dl = new Int32Array(buf, base + L.idx, L.icount); ix = new Uint32Array(L.icount); let acc = 0; for (let i = 0; i < L.icount; i++) ix[i] = acc += dl[i]; }
@@ -581,25 +588,27 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
   const sm01 = (a, b, v) => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
   const bump = (c, a, b, e = 0.9) => sm01(a, a + e, c) * (1 - sm01(b - e, b, c));
   const setRot = (n, x, y, z) => { const b = boneByName[n]; if (b) b.rotation.set(x, y, z); };
-  // A looping warm-up: arm swings, torso twists, then squats with arms forward.
+  // A looping warm-up: a light jog on the spot, torso twists, then squats. The scan was taken with the arms
+  // at the sides, so there is no surface inside the armpits and the arms only swing a little.
   function warmup(t) {
     const c = t % 15;
-    const wA = bump(c, 0, 5.2), wT = bump(c, 5, 10.2), wS = bump(c, 10, 15);
-    const pa = t * 2 * Math.PI / 1.7, swing = (0.65 + 0.95 * Math.sin(pa)) * wA;
+    const wJ = bump(c, 0, 5.2), wT = bump(c, 5, 10.2), wS = bump(c, 10, 15);
+    const pj = t * 2 * Math.PI / 0.62, step = Math.sin(pj);
+    const bounce = 0.1 * wJ * (0.5 - 0.5 * Math.cos(pj * 2));
     const sq = 0.36 * (0.5 - 0.5 * Math.cos(t * 2 * Math.PI / 2.2)) * wS;
-    const tw = 0.42 * Math.sin(t * 2 * Math.PI / 2.4) * wT;
+    const tw = 0.4 * Math.sin(t * 2 * Math.PI / 2.4) * wT;
+    const k = sq + bounce;
     for (const [L, s] of [['.L', 1], ['.R', -1]]) {
-      setRot('upperarm01' + L, -swing - sq * 3.2, 0, s * 0.22 * wT);
-      setRot('lowerarm01' + L, -0.35 * wA * (0.5 + 0.5 * Math.sin(pa)) - 0.3 * sq, 0, 0);
-      setRot('shoulder01' + L, -0.08 * swing, 0, 0);
-      setRot('upperleg01' + L, -sq, 0, 0);
-      setRot('lowerleg01' + L, 2 * sq, 0, 0);
-      setRot('foot' + L, -sq, 0, 0);
+      setRot('upperarm01' + L, -0.1 * wJ * s * step - sq * 0.55, 0, 0);
+      setRot('lowerarm01' + L, -0.1 * wJ - 0.08 * wJ * s * step - 0.35 * sq, 0, 0);
+      setRot('upperleg01' + L, -k - 0.14 * wJ * Math.max(0, s * step), 0, 0);
+      setRot('lowerleg01' + L, 2 * k + 0.3 * wJ * Math.max(0, s * step), 0, 0);
+      setRot('foot' + L, -k, 0, 0);
     }
-    for (const n of ['spine05', 'spine04', 'spine03', 'spine02', 'spine01']) setRot(n, sq * 0.14, tw * 0.2, 0);
+    for (const n of ['spine05', 'spine04', 'spine03', 'spine02', 'spine01']) setRot(n, sq * 0.14, tw * 0.2 + 0.012 * wJ * step, 0);
     setRot('neck01', 0.03 * Math.sin(t * 0.7), -tw * 0.35 + 0.08 * Math.sin(t * 0.37), 0.02 * Math.sin(t * 0.5));
     const R = boneByName['root'];
-    if (R) R.position.y = R.userData.rest.y - legLen * (1 - Math.cos(sq));
+    if (R) R.position.y = R.userData.rest.y - legLen * (1 - Math.cos(k));
   }
   const helper = new THREE.Object3D(), caster = new THREE.Raycaster();
   function buildPatches() {
@@ -740,7 +749,7 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
       moved = true;
     }
     if (controls.update()) moved = true;
-    if (!reduce && meshes.skin && now - lastIdle > 16) {
+    if (!reduce && meshes.body && now - lastIdle > 16) {
       const t = now / 1000;
       motion.uTime.value = t;
       if (skeleton) warmup(t);

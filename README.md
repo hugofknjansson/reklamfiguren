@@ -9,7 +9,17 @@ En 3D-figur där företag budar på reklamytor på tröjan och byxorna. Det leda
 
 ## Figuren
 
-Figuren byggs med `node tools/build-human.mjs`, som skriver `figure.bin.gz`.
+Figuren är en 3D-skanning av en riktig person: en helkroppsskanning och en separat närskanning av huvudet, båda gjorda med en iPhone. Råskanningarna ligger inte i repot. Sidan laddar `figure.bin.gz` (form och skelett) och fototexturerna `scan-body.jpg`, `scan-body-n.jpg` och `scan-head.jpg`.
 
-- Kroppen, ansiktet, skelettet och ögonen kommer från [MakeHuman](https://github.com/makehumancommunity/makehuman) och är licensierade CC0 (se `vendor/makehuman/LICENSE.ASSETS.md`).
-- Kläder, skor och hår genereras av skripten i `tools/mh/` utifrån kroppens form.
+Så här byggs figuren om från två GLB-filer, utpackade till `mesh.json` och texturer i en arbetsmapp:
+
+1. `node tools/scan/clean.mjs` tar bort golvet och skalar kroppen till 1,80 m.
+2. `python3 -I tools/scan/align_head.py` passar in huvudskanningen på kroppens huvud.
+3. `python3 -I tools/scan/merge.py` klipper bort kroppens eget huvud och fötterna, och huvudskanningen nedanför halsen.
+4. `python3 -I tools/scan/rig.py` lägger in skelettet, skär loss armarna från kroppen och räknar ut benvikter.
+5. `python3 -I tools/scan/texture.py` färgar tröjan och shortsen svarta och förbereder texturerna.
+6. `node tools/build-scan.mjs <arbetsmapp>` lägger till strumpor och sneakers och skriver `figure.bin.gz`.
+
+Varje skript beskriver sina argument överst i filen.
+
+`tools/build-human.mjs`, `tools/mh/` och `vendor/makehuman/` är den tidigare, genererade figuren som byggde på [MakeHuman](https://github.com/makehumancommunity/makehuman) (CC0, se `vendor/makehuman/LICENSE.ASSETS.md`). `tools/mh/mesher.mjs` används fortfarande för skorna.
