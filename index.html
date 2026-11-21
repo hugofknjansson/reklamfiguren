@@ -3,39 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
 <meta name="description" content="Buda på reklamytor på tröjan och byxorna på en 3D-figur.">
-<style>html{color-scheme:light}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>html{color-scheme:dark}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Reklamfiguren</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..800&family=Geist+Mono:wght@500..700&display=swap">
 <style>
-/* Layout: a lit studio stage that stays in view on desktop, a glass bidding panel beside it; stacks on phones */
+/* Layout: a black studio with one soft spotlight on the figure; the bidding panel is a dark sheet beside it */
 :root {
-  --bg: #f2f3f7; --surface: #ffffff; --ink: #0e1220; --muted: #5d6578; --faint: #8a91a3;
-  --line: #e4e7ee; --hair: rgba(14, 18, 32, .07);
-  --accent: #2b48ff; --accent-ink: #ffffff; --accent-soft: #e9edff;
-  --lead: #0c8a55; --lead-soft: #def5ea; --warn: #b4570c; --warn-soft: #fbeee2;
-  --stage-spot: #ffffff; --stage-edge: #e3e6ee; --floor: rgba(43, 72, 255, .10); --shadow: rgba(20, 28, 60, .16);
-  --f-display: "Archivo", "Arial", system-ui, sans-serif;
-  --f-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --bg: #000000; --surface: #0b0b0c; --ink: #f4f4f5; --muted: #a1a1a8; --faint: #6e6e76;
+  --line: #242427; --hair: rgba(255, 255, 255, .1);
+  --accent: #ffffff; --accent-ink: #000000; --accent-soft: #1b1b1e;
+  --lead: #63d6a3; --lead-soft: #0f2a1f; --warn: #f0a860; --warn-soft: #2e2012;
+  --stage-spot: #37373d; --stage-edge: #000000; --floor: rgba(255, 255, 255, .09); --shadow: rgba(0, 0, 0, .8);
+  --f-display: "Geist", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "Geist", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --r-lg: 20px; --r-md: 14px; --r-sm: 10px;
+  color-scheme: dark;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0a0c12; --surface: #141823; --ink: #eef0f6; --muted: #9aa3b6; --faint: #6c7489;
-  --line: #222838; --hair: rgba(255, 255, 255, .07);
-  --accent: #8ea2ff; --accent-ink: #0a0d18; --accent-soft: #1b2346;
-  --lead: #52d69d; --lead-soft: #10301f; --warn: #f2a65a; --warn-soft: #33220f;
-  --stage-spot: #273149; --stage-edge: #0d1018; --floor: rgba(142, 162, 255, .14); --shadow: rgba(0, 0, 0, .5); color-scheme: dark } }
-:root[data-theme="dark"] {
-  --bg: #0a0c12; --surface: #141823; --ink: #eef0f6; --muted: #9aa3b6; --faint: #6c7489;
-  --line: #222838; --hair: rgba(255, 255, 255, .07);
-  --accent: #8ea2ff; --accent-ink: #0a0d18; --accent-soft: #1b2346;
-  --lead: #52d69d; --lead-soft: #10301f; --warn: #f2a65a; --warn-soft: #33220f;
-  --stage-spot: #273149; --stage-edge: #0d1018; --floor: rgba(142, 162, 255, .14); --shadow: rgba(0, 0, 0, .5); color-scheme: dark }
 
 * { box-sizing: border-box }
 body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5;
@@ -48,8 +38,8 @@ html, body { height: 100% }
 body { padding: 0; overflow: hidden; overscroll-behavior: none }
 .stage { position: fixed; inset: 0; touch-action: none; isolation: isolate; margin: 0;
   background:
-    radial-gradient(ellipse 50% 62% at 50% 40%, var(--stage-spot) 0%, transparent 72%),
-    linear-gradient(180deg, var(--stage-edge), var(--bg)) }
+    radial-gradient(ellipse 46% 60% at 50% 42%, var(--stage-spot) 0%, transparent 74%),
+    var(--bg) }
 .stage canvas { display: block; width: 100%; height: 100%; cursor: grab; outline: none }
 .stage canvas:active { cursor: grabbing }
 .stage canvas.hover { cursor: pointer }
@@ -103,7 +93,7 @@ body { padding: 0; overflow: hidden; overscroll-behavior: none }
 .card { background: var(--surface); border: 1px solid var(--hair); border-radius: var(--r-lg); padding: 20px;
   box-shadow: 0 1px 2px var(--hair), 0 12px 32px -18px var(--shadow) }
 .eyebrow { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); margin: 0 }
-.detail h2 { font-family: var(--f-display); font-stretch: 108%; font-weight: 700; font-size: 30px; letter-spacing: -0.03em; line-height: 1.05; margin: 6px 0 16px; text-wrap: balance }
+.detail h2 { font-family: var(--f-display); font-weight: 600; font-size: 30px; letter-spacing: -0.035em; line-height: 1.05; margin: 6px 0 16px; text-wrap: balance }
 .price { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;
   padding: 14px 16px; border-radius: var(--r-md); background: var(--bg) }
 .price .lbl { font-size: 12px; color: var(--muted) }
@@ -123,7 +113,7 @@ label { display: grid; gap: 6px; font-size: 13px; font-weight: 600 }
 input { font: 500 16px var(--f-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm);
   padding: 11px 14px; width: 100%; outline: none; transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease }
 input::placeholder { color: var(--faint) }
-input:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); background: var(--surface) }
+input:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(255, 255, 255, .12); background: var(--surface) }
 button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
 .amount-row { display: flex; gap: 6px }
 .amount-row input { font-family: var(--f-mono); font-weight: 700; font-variant-numeric: tabular-nums; min-width: 0; flex: 1 }
@@ -133,8 +123,8 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
 .pill:active { transform: scale(0.95) }
 @media (hover: hover) and (pointer: fine) { .pill:hover { border-color: var(--accent); background: var(--accent-soft) } }
 .help { font-size: 12px; color: var(--muted); font-weight: 400 }
-.btn-primary { font: 650 15px var(--f-body); color: var(--accent-ink); background: var(--accent); border: 0; border-radius: var(--r-md); padding: 14px 18px; cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 8px 20px -10px var(--accent);
+.btn-primary { font: 600 15px var(--f-body); letter-spacing: -0.01em; color: var(--accent-ink); background: var(--accent); border: 0; border-radius: var(--r-md); padding: 14px 18px; cursor: pointer;
+  box-shadow: 0 10px 30px -14px rgba(255, 255, 255, .45);
   transition: transform 160ms var(--ease-out), filter 150ms ease, opacity 150ms ease }
 .btn-primary:active:not(:disabled) { transform: scale(0.97) }
 @media (hover: hover) and (pointer: fine) { .btn-primary:hover:not(:disabled) { filter: brightness(1.07) } }
@@ -171,7 +161,7 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
 .card { background: var(--surface); border: 1px solid var(--hair); border-radius: var(--r-lg); padding: 20px;
   box-shadow: 0 1px 2px var(--hair), 0 12px 32px -18px var(--shadow) }
 .eyebrow { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); margin: 0 }
-.detail h2 { font-family: var(--f-display); font-stretch: 108%; font-weight: 700; font-size: 30px; letter-spacing: -0.03em; line-height: 1.05; margin: 6px 0 16px; text-wrap: balance }
+.detail h2 { font-family: var(--f-display); font-weight: 600; font-size: 30px; letter-spacing: -0.035em; line-height: 1.05; margin: 6px 0 16px; text-wrap: balance }
 .price { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;
   padding: 14px 16px; border-radius: var(--r-md); background: var(--bg) }
 .price .lbl { font-size: 12px; color: var(--muted) }
@@ -191,7 +181,7 @@ label { display: grid; gap: 6px; font-size: 13px; font-weight: 600 }
 input { font: 500 16px var(--f-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm);
   padding: 11px 14px; width: 100%; outline: none; transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease }
 input::placeholder { color: var(--faint) }
-input:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); background: var(--surface) }
+input:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(255, 255, 255, .12); background: var(--surface) }
 button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
 .amount-row { display: flex; gap: 6px }
 .amount-row input { font-family: var(--f-mono); font-weight: 700; font-variant-numeric: tabular-nums; min-width: 0; flex: 1 }
@@ -201,8 +191,8 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
 .pill:active { transform: scale(0.95) }
 @media (hover: hover) and (pointer: fine) { .pill:hover { border-color: var(--accent); background: var(--accent-soft) } }
 .help { font-size: 12px; color: var(--muted); font-weight: 400 }
-.btn-primary { font: 650 15px var(--f-body); color: var(--accent-ink); background: var(--accent); border: 0; border-radius: var(--r-md); padding: 14px 18px; cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 8px 20px -10px var(--accent);
+.btn-primary { font: 600 15px var(--f-body); letter-spacing: -0.01em; color: var(--accent-ink); background: var(--accent); border: 0; border-radius: var(--r-md); padding: 14px 18px; cursor: pointer;
+  box-shadow: 0 10px 30px -14px rgba(255, 255, 255, .45);
   transition: transform 160ms var(--ease-out), filter 150ms ease, opacity 150ms ease }
 .btn-primary:active:not(:disabled) { transform: scale(0.97) }
 @media (hover: hover) and (pointer: fine) { .btn-primary:hover:not(:disabled) { filter: brightness(1.07) } }
@@ -625,7 +615,7 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
       canvas.height = 256; canvas.width = Math.round(256 * sp.w / sp.h);
       const tex = new THREE.CanvasTexture(canvas);
       tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 8;
-      const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.85, emissive: 0x2b48ff, emissiveIntensity: 0,
+      const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.85, 
         polygonOffset: true, polygonOffsetFactor: -4, depthWrite: false });
       skinDecal(geo, target);
       const mesh = new THREE.Mesh(geo, mat);
@@ -648,7 +638,7 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
     let s = max;
     do { ctx.font = `${weight} ${s}px ${family}`; s -= 4; } while (ctx.measureText(text).width > maxW && s > 18);
   }
-  const DISPLAY = '"Archivo", "Arial Narrow", sans-serif', MONO = '"JetBrains Mono", monospace';
+  const DISPLAY = '"Geist", system-ui, sans-serif', MONO = '"Geist Mono", ui-monospace, monospace';
   function drawPatch(id, leader) {
     leaders.set(id, leader);
     if (!patches.has(id)) return;
@@ -656,30 +646,31 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
     const W = c.width, H = c.height, m = 8;
     ctx.clearRect(0, 0, W, H);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    try { ctx.fontStretch = 'condensed'; } catch (e) {}
+    const state = id === selected ? 2 : id === hovered ? 1 : 0;
+    patches.get(id).state = state;
     if (leader) {
-      const ink = '#f3f1ea';
-      ctx.fillStyle = ink;
+      if (state) { ctx.fillStyle = `rgba(255,255,255,${state === 2 ? 0.16 : 0.09})`; rr(ctx, m, m, W - 2 * m, H - 2 * m, 16); ctx.fill(); }
+      ctx.fillStyle = '#f4f4f5';
       const text = leader.brand.toUpperCase(), words = text.split(/\s+/);
-      fit(ctx, text, 900, DISPLAY, 130, W * 0.8);
+      fit(ctx, text, 800, DISPLAY, 120, W * 0.8);
       if (parseFloat(ctx.font.match(/([\d.]+)px/)[1]) < H * 0.24 && words.length > 1) {
         let best = 1, diff = Infinity;
         for (let i = 1; i < words.length; i++) { const d = Math.abs(words.slice(0, i).join(' ').length - words.slice(i).join(' ').length); if (d < diff) { diff = d; best = i; } }
         const l1 = words.slice(0, best).join(' '), l2 = words.slice(best).join(' ');
-        fit(ctx, l1.length > l2.length ? l1 : l2, 900, DISPLAY, 82, W * 0.82);
+        fit(ctx, l1.length > l2.length ? l1 : l2, 800, DISPLAY, 80, W * 0.82);
         ctx.fillText(l1, W / 2, H * 0.27); ctx.fillText(l2, W / 2, H * 0.55);
       } else ctx.fillText(text, W / 2, H * 0.44);
       ctx.globalAlpha = 0.75; ctx.fillRect(W * 0.3, H * 0.66, W * 0.4, 3);
-      ctx.font = `700 30px ${MONO}`; ctx.fillText(kr(leader.amount), W / 2, H * 0.8); ctx.globalAlpha = 1;
+      ctx.font = `600 30px ${MONO}`; ctx.fillText(kr(leader.amount), W / 2, H * 0.8); ctx.globalAlpha = 1;
     } else {
-      ctx.fillStyle = 'rgba(233,237,255,0.88)'; rr(ctx, m, m, W - 2 * m, H - 2 * m, 16); ctx.fill();
-      ctx.strokeStyle = '#2b48ff'; ctx.lineWidth = 6; ctx.setLineDash([18, 12]);
+      ctx.fillStyle = `rgba(255,255,255,${[0.07, 0.16, 0.26][state]})`; rr(ctx, m, m, W - 2 * m, H - 2 * m, 16); ctx.fill();
+      ctx.strokeStyle = `rgba(255,255,255,${state ? 1 : 0.8})`; ctx.lineWidth = 5; ctx.setLineDash([18, 12]);
       rr(ctx, m + 4, m + 4, W - 2 * m - 8, H - 2 * m - 8, 13); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = '#2b48ff';
-      fit(ctx, 'LEDIG', 900, DISPLAY, 96, W - 48);
+      ctx.fillStyle = '#ffffff';
+      fit(ctx, 'LEDIG', 700, DISPLAY, 84, W - 56);
       ctx.fillText('LEDIG', W / 2, H * 0.42);
-      fit(ctx, 'från ' + kr(sp.start), 700, MONO, 34, W - 40);
-      ctx.fillText('från ' + kr(sp.start), W / 2, H * 0.74);
+      ctx.globalAlpha = 0.8; fit(ctx, 'från ' + kr(sp.start), 500, MONO, 32, W - 44);
+      ctx.fillText('från ' + kr(sp.start), W / 2, H * 0.74); ctx.globalAlpha = 1;
     }
     tex.needsUpdate = true; dirty = true;
   }
@@ -687,7 +678,7 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
   let hovered = null, selected = null, dirty = true;
   function highlight() {
     dirty = true;
-    for (const [id, p] of patches) p.mesh.material.emissiveIntensity = id === selected ? 0.5 : id === hovered ? 0.28 : 0;
+    for (const [id, p] of patches) if (p.state !== (id === selected ? 2 : id === hovered ? 1 : 0)) drawPatch(id, leaders.get(id) || null);
   }
   const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
   function pick(e) {
