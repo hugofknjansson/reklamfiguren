@@ -5,7 +5,8 @@ En 3D-figur där företag budar på reklamytor på tröjan och byxorna. Det leda
 - Sidan är en enda fil, `index.html`, och publiceras med GitHub Pages.
 - Buden sparas i Supabase-tabellen `public.reklamfiguren_bud`. Alla besökare kan läsa och lägga bud, men ingen kan ändra eller ta bort dem. Bud under utropspriset eller minsta höjning stoppas av databasen.
 - Auktionen stänger 30 november 2026 kl. 20:00. Datumet finns både i `index.html` och i databasfunktionen `reklamfiguren_validera_bud`.
-- Ta bort ett oönskat bud i Supabase under Table Editor → `reklamfiguren_bud`.
+- Köparen väljer vad som ska synas på ytan: en text (`ad_text`, högst 40 tecken) eller en bild/logotyp (`image_data`). Bilden krymps i webbläsaren till högst 512 pixlar och sparas som en liten data-URL direkt i tabellen; SVG och för stora bilder stoppas av databasen. `brand` är köparens namn och visas under annonsen.
+- Allt som laddas upp visas direkt för alla besökare. Ta bort olämpligt innehåll genom att radera budets rad i Supabase under Table Editor → `reklamfiguren_bud`; då visas nästa högsta bud på ytan.
 
 ## Figuren
 

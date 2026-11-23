@@ -233,6 +233,24 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
   .btn-primary, .pill, .row, .view-btn { transition: background-color 150ms ease, opacity 150ms ease }
   .btn-primary:active:not(:disabled), .pill:active, .row:active, .view-btn:active { transform: none }
 }
+
+/* Content picker in the bid form */
+.content { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 10px }
+.content legend { padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 600 }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-md) }
+.seg button { font: 600 13px var(--f-body); color: var(--muted); background: transparent; border: 0; border-radius: var(--r-sm); padding: 9px 10px; cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, transform 160ms var(--ease-out) }
+.seg button:active { transform: scale(0.97) }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg) }
+.drop { position: relative; display: flex; align-items: center; gap: 12px; padding: 14px; border: 1.5px dashed var(--line); border-radius: var(--r-md);
+  background: var(--bg); cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 400; transition: border-color 150ms ease }
+.drop:focus-within { outline: 2px solid var(--accent); outline-offset: 2px }
+.drop.over { border-color: var(--ink); color: var(--ink) }
+@media (hover: hover) and (pointer: fine) { .drop:hover { border-color: var(--ink) } }
+.drop img { width: 48px; height: 48px; object-fit: contain; border-radius: 8px; background: #ffffff; flex: none }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none }
+.preview { display: grid; gap: 6px }
+.preview canvas { display: block; width: auto; height: auto; max-width: 100%; max-height: 170px; margin: 0 auto; border-radius: var(--r-md); background: #121214; border: 1px solid var(--hair) }
 </style>
 </head>
 <body>
@@ -259,9 +277,32 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
     </div>
     <p class="leader" id="d-leader">Inga bud ännu.</p>
     <form id="bid-form" novalidate>
-      <label for="brand">Företag eller varumärke som ska synas
-        <input id="brand" name="brand" maxlength="24" autocomplete="organization" placeholder="t.ex. Kaffebaren Norr" required>
+      <label for="brand">Ditt namn eller företag
+        <input id="brand" name="brand" maxlength="40" autocomplete="organization" placeholder="t.ex. Kaffebaren Norr" required>
+        <span class="help">Visas under annonsen som den som köpt ytan.</span>
       </label>
+      <fieldset class="content">
+        <legend>Vad ska synas på ytan?</legend>
+        <div class="seg" role="group" aria-label="Typ av innehåll">
+          <button type="button" id="kind-text" aria-pressed="true">Text</button>
+          <button type="button" id="kind-image" aria-pressed="false">Bild eller logotyp</button>
+        </div>
+        <label for="ad-text" id="text-field">Text på ytan
+          <input id="ad-text" name="ad-text" maxlength="40" placeholder="t.ex. Bästa kaffet i stan">
+        </label>
+        <div id="image-field" hidden>
+          <label class="drop" id="drop" for="ad-image">
+            <img id="drop-thumb" alt="" hidden>
+            <span id="drop-label">Välj en bild eller dra hit den. PNG, JPG eller WebP.</span>
+            <input id="ad-image" name="ad-image" type="file" accept="image/png,image/jpeg,image/webp,image/*">
+          </label>
+        </div>
+        <div class="preview">
+          <span class="help">Förhandsvisning på figuren</span>
+          <canvas id="preview" width="400" height="320" aria-label="Förhandsvisning av ytan"></canvas>
+        </div>
+        <span class="help">Det du väljer visas för alla som besöker sidan så länge du har högsta budet. Olämpligt innehåll tas bort.</span>
+      </fieldset>
       <label for="amount">Ditt bud (kr)
         <span class="amount-row">
           <input id="amount" name="amount" type="number" inputmode="numeric" step="50" required>
@@ -291,16 +332,16 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
 <script>
 const PI = Math.PI;
 const SPOTS = [
-  { id: 'brost',    name: 'Bröst',           garment: 'T-shirt', size: '30 × 20 cm', start: 5000, layer: 'body', o: [-0.035, 1.32, 1],    d: [0, 0, -1], w: 0.24,  h: 0.15, depth: 0.12, tc: 0 },
-  { id: 'mage',     name: 'Mage',            garment: 'T-shirt', size: '30 × 14 cm', start: 2500, layer: 'body', o: [-0.035, 1.1, 1],     d: [0, 0, -1], w: 0.22,  h: 0.12, depth: 0.12, tc: 0 },
-  { id: 'rygg',     name: 'Rygg',            garment: 'T-shirt', size: '34 × 30 cm', start: 4000, layer: 'body', o: [-0.035, 1.27, -1],   d: [0, 0, 1],  w: 0.27,  h: 0.24, depth: 0.12, tc: PI },
-  { id: 'arm-v',    name: 'Vänster ärm',     garment: 'T-shirt', size: '10 × 18 cm', start: 1500, layer: 'body', o: [1, 1.33, -0.015],    d: [-1, 0, 0], w: 0.08,  h: 0.09, depth: 0.07, tc: PI / 2 },
-  { id: 'arm-h',    name: 'Höger ärm',       garment: 'T-shirt', size: '10 × 18 cm', start: 1500, layer: 'body', o: [-1, 1.33, -0.02],    d: [1, 0, 0],  w: 0.08,  h: 0.09, depth: 0.07, tc: -PI / 2 },
-  { id: 'lar-v',    name: 'Vänster lår',     garment: 'Shorts', size: '12 × 22 cm', start: 2000, layer: 'body', o: [0.085, 0.72, 1],      d: [0, 0, -1], w: 0.09,  h: 0.12, depth: 0.1,  tc: 0.05 },
-  { id: 'lar-h',    name: 'Höger lår',       garment: 'Shorts', size: '12 × 22 cm', start: 2000, layer: 'body', o: [-0.13, 0.72, 1],      d: [0, 0, -1], w: 0.09,  h: 0.12, depth: 0.1,  tc: -0.05 },
-  { id: 'ben-v',    name: 'Vänster sida',    garment: 'Shorts', size: '10 × 16 cm', start: 1000, layer: 'body', o: [1, 0.72, -0.02],      d: [-1, 0, 0], w: 0.075, h: 0.11, depth: 0.08, tc: PI / 2 },
-  { id: 'ben-h',    name: 'Höger sida',      garment: 'Shorts', size: '10 × 16 cm', start: 1000, layer: 'body', o: [-1, 0.72, -0.02],     d: [1, 0, 0],  w: 0.075, h: 0.11, depth: 0.08, tc: -PI / 2 },
-  { id: 'bakficka', name: 'Baksida',         garment: 'Shorts', size: '14 × 12 cm', start: 1200, layer: 'body', o: [0.05, 0.84, -1],      d: [0, 0, 1],  w: 0.09,  h: 0.075, depth: 0.08, tc: PI - 0.4 },
+  { id: 'brost',    name: 'Bröst',           garment: 'T-shirt', size: '30 × 19 cm', start: 5000, layer: 'body', o: [-0.035, 1.31, 1],    d: [0, 0, -1], w: 0.30,  h: 0.19, depth: 0.15, tc: 0 },
+  { id: 'mage',     name: 'Mage',            garment: 'T-shirt', size: '28 × 15 cm', start: 2500, layer: 'body', o: [-0.035, 1.08, 1],    d: [0, 0, -1], w: 0.28,  h: 0.15, depth: 0.15, tc: 0 },
+  { id: 'rygg',     name: 'Rygg',            garment: 'T-shirt', size: '34 × 32 cm', start: 4000, layer: 'body', o: [-0.035, 1.24, -1],   d: [0, 0, 1],  w: 0.34,  h: 0.32, depth: 0.15, tc: PI },
+  { id: 'arm-v',    name: 'Vänster ärm',     garment: 'T-shirt', size: '11 × 11 cm', start: 1500, layer: 'body', o: [1, 1.325, -0.015],   d: [-1, 0, 0], w: 0.11,  h: 0.11, depth: 0.09, tc: PI / 2 },
+  { id: 'arm-h',    name: 'Höger ärm',       garment: 'T-shirt', size: '11 × 11 cm', start: 1500, layer: 'body', o: [-1, 1.325, -0.02],   d: [1, 0, 0],  w: 0.11,  h: 0.11, depth: 0.09, tc: -PI / 2 },
+  { id: 'lar-v',    name: 'Vänster lår',     garment: 'Shorts', size: '12 × 16 cm', start: 2000, layer: 'body', o: [0.085, 0.73, 1],      d: [0, 0, -1], w: 0.12,  h: 0.16, depth: 0.12, tc: 0.05 },
+  { id: 'lar-h',    name: 'Höger lår',       garment: 'Shorts', size: '12 × 16 cm', start: 2000, layer: 'body', o: [-0.13, 0.73, 1],      d: [0, 0, -1], w: 0.12,  h: 0.16, depth: 0.12, tc: -0.05 },
+  { id: 'ben-v',    name: 'Vänster sida',    garment: 'Shorts', size: '10 × 15 cm', start: 1000, layer: 'body', o: [1, 0.74, -0.02],      d: [-1, 0, 0], w: 0.10,  h: 0.15, depth: 0.1,  tc: PI / 2 },
+  { id: 'ben-h',    name: 'Höger sida',      garment: 'Shorts', size: '10 × 15 cm', start: 1000, layer: 'body', o: [-1, 0.74, -0.02],     d: [1, 0, 0],  w: 0.10,  h: 0.15, depth: 0.1,  tc: -PI / 2 },
+  { id: 'bakficka', name: 'Baksida',         garment: 'Shorts', size: '14 × 11 cm', start: 1200, layer: 'body', o: [0.05, 0.84, -1],      d: [0, 0, 1],  w: 0.14,  h: 0.11, depth: 0.1,  tc: PI - 0.4 },
 ];
 const kr = n => Math.round(n).toLocaleString('sv-SE') + ' kr';
 
@@ -612,7 +653,7 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
       helper.position.copy(hit.point); helper.lookAt(hit.point.clone().sub(d));
       const geo = new THREE.DecalGeometry(target, hit.point, helper.rotation.clone(), new THREE.Vector3(sp.w, sp.h, sp.depth));
       const canvas = document.createElement('canvas');
-      canvas.height = 256; canvas.width = Math.round(256 * sp.w / sp.h);
+      canvas.height = 512; canvas.width = Math.round(512 * sp.w / sp.h);
       const tex = new THREE.CanvasTexture(canvas);
       tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 8;
       const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.85, 
@@ -634,47 +675,102 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
     .catch(() => { if (loading) loading.textContent = 'Figuren kunde inte laddas. Ladda om sidan.'; });
 
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
-  function fit(ctx, text, weight, family, max, maxW) {
-    let s = max;
-    do { ctx.font = `${weight} ${s}px ${family}`; s -= 4; } while (ctx.measureText(text).width > maxW && s > 18);
+  function fit(ctx, text, weight, family, max, maxW, min = 12) {
+    let size = max;
+    do { ctx.font = `${weight} ${size}px ${family}`; size -= Math.max(1, size * 0.04); } while (ctx.measureText(text).width > maxW && size > min);
+    return size;
   }
   const DISPLAY = '"Geist", system-ui, sans-serif', MONO = '"Geist Mono", ui-monospace, monospace';
+  // Uploaded images are decoded once and shared by the figure and the preview.
+  const imageCache = new Map();
+  function getImage(src, onReady) {
+    let e = imageCache.get(src);
+    if (!e) {
+      e = { img: new Image(), ok: false, waiting: [] };
+      e.img.onload = () => { e.ok = true; e.waiting.splice(0).forEach(f => f()); };
+      e.img.src = src;
+      imageCache.set(src, e);
+    }
+    if (!e.ok && onReady) e.waiting.push(onReady);
+    return e.ok ? e.img : null;
+  }
+  // Split text into at most `lines` lines of roughly equal length.
+  function wrap(text, lines) {
+    const words = text.split(/\s+/).filter(Boolean);
+    if (lines < 2 || words.length < 2) return [text];
+    let best = [text], bestScore = Infinity;
+    for (let i = 1; i < words.length; i++) {
+      const a = words.slice(0, i).join(' '), b = words.slice(i).join(' '), score = Math.max(a.length, b.length);
+      if (score < bestScore) { bestScore = score; best = [a, b]; }
+    }
+    return best;
+  }
+  // Paints a spot: the leader's text or image with "buyer · amount" underneath, or an inviting empty spot.
+  function paint(ctx, W, H, sp, leader, state, onImage) {
+    const m = H * 0.03, r = H * 0.06, U = H / 100;
+    ctx.clearRect(0, 0, W, H);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (leader) {
+      const capH = H * 0.2, top = m, bottom = H - m - capH;
+      if (state) { ctx.fillStyle = `rgba(255,255,255,${state === 2 ? 0.18 : 0.1})`; rr(ctx, m, m, W - 2 * m, H - 2 * m, r); ctx.fill(); }
+      if (leader.kind === 'image' && leader.image) {
+        const img = getImage(leader.image, onImage);
+        const bw = W - 2 * m - 2 * U, bh = bottom - top - U;
+        ctx.fillStyle = '#ffffff'; rr(ctx, m + U, top, bw, bh, r * 0.8); ctx.fill();
+        if (img) {
+          const pad = 4 * U, s = Math.min((bw - 2 * pad) / img.width, (bh - 2 * pad) / img.height);
+          const iw = img.width * s, ih = img.height * s;
+          ctx.save(); rr(ctx, m + U, top, bw, bh, r * 0.8); ctx.clip();
+          ctx.drawImage(img, m + U + (bw - iw) / 2, top + (bh - ih) / 2, iw, ih);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = '#9a9aa0'; ctx.font = `500 ${6 * U}px ${DISPLAY}`; ctx.fillText('Laddar bild…', W / 2, (top + bottom) / 2);
+        }
+      } else {
+        const text = (leader.kind === 'text' && leader.text ? leader.text : leader.brand).toUpperCase();
+        const maxW = W - 2 * m - 8 * U, area = bottom - top;
+        let lines = [text], size = fit(ctx, text, 800, DISPLAY, area * 0.62, maxW);
+        if (size < area * 0.3 && text.includes(' ')) {
+          const two = wrap(text, 2), longest = two.reduce((a, b) => (a.length >= b.length ? a : b));
+          const size2 = fit(ctx, longest, 800, DISPLAY, area * 0.42, maxW);
+          if (size2 > size * 1.15) { lines = two; size = size2; }
+        }
+        ctx.font = `800 ${size}px ${DISPLAY}`; ctx.fillStyle = '#ffffff';
+        const lh = size * 1.02, y0 = (top + bottom) / 2 - (lines.length - 1) * lh / 2;
+        lines.forEach((l, i) => ctx.fillText(l, W / 2, y0 + i * lh));
+      }
+      const cap = `${leader.brand} · ${kr(leader.amount)}`;
+      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      fit(ctx, cap, 600, MONO, capH * 0.5, W - 2 * m - 6 * U, 8);
+      ctx.fillText(cap, W / 2, H - m - capH * 0.48);
+    } else {
+      ctx.fillStyle = `rgba(255,255,255,${[0.14, 0.24, 0.32][state]})`; rr(ctx, m, m, W - 2 * m, H - 2 * m, r); ctx.fill();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(4, 2.2 * U); ctx.setLineDash([7 * U, 4.5 * U]);
+      rr(ctx, m + 2 * U, m + 2 * U, W - 2 * m - 4 * U, H - 2 * m - 4 * U, r * 0.8); ctx.stroke(); ctx.setLineDash([]);
+      const plusR = Math.min(H * 0.13, W * 0.12), cy = H * 0.3;
+      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(W / 2, cy, plusR, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#000000'; ctx.lineWidth = plusR * 0.22; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(W / 2 - plusR * 0.5, cy); ctx.lineTo(W / 2 + plusR * 0.5, cy); ctx.moveTo(W / 2, cy - plusR * 0.5); ctx.lineTo(W / 2, cy + plusR * 0.5); ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      fit(ctx, 'LEDIG', 800, DISPLAY, H * 0.2, W - 14 * U);
+      ctx.fillText('LEDIG', W / 2, H * 0.6);
+      fit(ctx, 'från ' + kr(sp.start), 600, MONO, H * 0.1, W - 12 * U, 8);
+      ctx.fillText('från ' + kr(sp.start), W / 2, H * 0.79);
+    }
+  }
   function drawPatch(id, leader) {
     leaders.set(id, leader);
     if (!patches.has(id)) return;
-    const { canvas: c, ctx, tex, sp } = patches.get(id);
-    const W = c.width, H = c.height, m = 8;
-    ctx.clearRect(0, 0, W, H);
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    const state = id === selected ? 2 : id === hovered ? 1 : 0;
-    patches.get(id).state = state;
-    if (leader) {
-      if (state) { ctx.fillStyle = `rgba(255,255,255,${state === 2 ? 0.16 : 0.09})`; rr(ctx, m, m, W - 2 * m, H - 2 * m, 16); ctx.fill(); }
-      ctx.fillStyle = '#f4f4f5';
-      const text = leader.brand.toUpperCase(), words = text.split(/\s+/);
-      fit(ctx, text, 800, DISPLAY, 120, W * 0.8);
-      if (parseFloat(ctx.font.match(/([\d.]+)px/)[1]) < H * 0.24 && words.length > 1) {
-        let best = 1, diff = Infinity;
-        for (let i = 1; i < words.length; i++) { const d = Math.abs(words.slice(0, i).join(' ').length - words.slice(i).join(' ').length); if (d < diff) { diff = d; best = i; } }
-        const l1 = words.slice(0, best).join(' '), l2 = words.slice(best).join(' ');
-        fit(ctx, l1.length > l2.length ? l1 : l2, 800, DISPLAY, 80, W * 0.82);
-        ctx.fillText(l1, W / 2, H * 0.27); ctx.fillText(l2, W / 2, H * 0.55);
-      } else ctx.fillText(text, W / 2, H * 0.44);
-      ctx.globalAlpha = 0.75; ctx.fillRect(W * 0.3, H * 0.66, W * 0.4, 3);
-      ctx.font = `600 30px ${MONO}`; ctx.fillText(kr(leader.amount), W / 2, H * 0.8); ctx.globalAlpha = 1;
-    } else {
-      ctx.fillStyle = `rgba(255,255,255,${[0.07, 0.16, 0.26][state]})`; rr(ctx, m, m, W - 2 * m, H - 2 * m, 16); ctx.fill();
-      ctx.strokeStyle = `rgba(255,255,255,${state ? 1 : 0.8})`; ctx.lineWidth = 5; ctx.setLineDash([18, 12]);
-      rr(ctx, m + 4, m + 4, W - 2 * m - 8, H - 2 * m - 8, 13); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = '#ffffff';
-      fit(ctx, 'LEDIG', 700, DISPLAY, 84, W - 56);
-      ctx.fillText('LEDIG', W / 2, H * 0.42);
-      ctx.globalAlpha = 0.8; fit(ctx, 'från ' + kr(sp.start), 500, MONO, 32, W - 44);
-      ctx.fillText('från ' + kr(sp.start), W / 2, H * 0.74); ctx.globalAlpha = 1;
-    }
-    tex.needsUpdate = true; dirty = true;
+    const p = patches.get(id), state = id === selected ? 2 : id === hovered ? 1 : 0;
+    p.state = state;
+    paint(p.ctx, p.canvas.width, p.canvas.height, p.sp, leader, state, () => drawPatch(id, leaders.get(id) || null));
+    p.tex.needsUpdate = true; dirty = true;
   }
-
+  function preview(canvas, id, leader, onImage) {
+    const sp = SPOTS.find(s => s.id === id), H = 320, W = Math.round(H * sp.w / sp.h);
+    if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+    paint(canvas.getContext('2d'), W, H, sp, leader, 0, onImage);
+  }
   let hovered = null, selected = null, dirty = true;
   function highlight() {
     dirty = true;
@@ -751,7 +847,7 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
   })(last);
 
   const api = {
-    drawPatch, onPick: null,
+    drawPatch, preview, onPick: null,
     select(id) { selected = id; highlight(); },
     focus(id) { focusAngle(SPOTS.find(s => s.id === id).tc); },
     face(a) { focusAngle(a); },
@@ -777,13 +873,18 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
   let shownKey = '';
   const step = a => a < 5000 ? 100 : 250;
 
+  const imageById = new Map();
   function clean(spots) {
     const out = {};
     if (!spots || typeof spots !== 'object') return out;
     for (const sp of SPOTS) {
       const b = spots[sp.id];
-      if (b && typeof b.brand === 'string' && Number.isFinite(b.amount) && b.amount > 0)
-        out[sp.id] = { brand: b.brand.trim().slice(0, 24) || 'Okänd', amount: Math.round(b.amount), t: Number(b.t) || 0 };
+      if (!(b && typeof b.brand === 'string' && Number.isFinite(b.amount) && b.amount > 0)) continue;
+      const image = typeof b.image === 'string' && /^data:image\/(png|jpeg|webp);base64,/.test(b.image) ? b.image : (b.id != null ? imageById.get(b.id) || null : null);
+      out[sp.id] = {
+        brand: b.brand.trim().slice(0, 40) || 'Okänd', amount: Math.round(b.amount), t: Number(b.t) || 0, id: b.id ?? null,
+        kind: b.kind === 'image' ? 'image' : 'text', text: typeof b.text === 'string' ? b.text.trim().slice(0, 40) : '', image,
+      };
     }
     return out;
   }
@@ -838,8 +939,11 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
     shownKey = key;
     $('d-chip').className = 'chip ' + cls; $('d-chip').textContent = txt;
     const ld = $('d-leader'); ld.textContent = '';
-    if (L) { ld.append('Leds av '); const b = document.createElement('b'); b.textContent = L.brand; ld.append(b, ` · ${rk.length} ${rk.length === 1 ? 'bud' : 'bud totalt'}`); }
-    else ld.textContent = 'Inga bud ännu. Första budet tar ytan.';
+    if (L) {
+      ld.append('Köpt av '); const b = document.createElement('b'); b.textContent = L.brand;
+      const what = L.kind === 'image' ? 'bild' : L.text ? `”${L.text}”` : 'namn';
+      ld.append(b, ` · visar ${what} · ${rk.length} bud`);
+    } else ld.textContent = 'Inga bud ännu. Första budet tar ytan.';
     const min = minBid(sp.id), amt = $('amount');
     amt.min = min;
     if (resetAmount || !amt.value || Number(amt.value) < min) amt.value = min;
@@ -864,7 +968,8 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
 
   function render(resetAmount) {
     for (const sp of SPOTS) Fig.drawPatch(sp.id, ranking(sp.id)[0] || null);
-    renderList(); renderDetail(resetAmount); renderStats();
+    renderList(); renderDetail(resetAmount); renderStats(); renderPreview();
+    if (mode === 'shared') fetchLeaderImages();
   }
 
   const sheet = $('sheet'), phone = matchMedia('(max-width: 700px)');
@@ -930,18 +1035,97 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
 
   function say(text, ok) { const m = $('msg'); m.textContent = text; m.className = 'msg ' + (ok ? 'ok' : 'err'); }
 
+  // ---------- what the buyer wants on the spot ----------
+  const content = { kind: 'text', image: null };
+  function setKind(kind) {
+    content.kind = kind;
+    $('kind-text').setAttribute('aria-pressed', String(kind === 'text'));
+    $('kind-image').setAttribute('aria-pressed', String(kind === 'image'));
+    $('text-field').hidden = kind !== 'text';
+    $('image-field').hidden = kind !== 'image';
+    renderPreview();
+  }
+  $('kind-text').addEventListener('click', () => setKind('text'));
+  $('kind-image').addEventListener('click', () => setKind('image'));
+  function draftLeader() {
+    const brand = $('brand').value.trim() || 'Ditt namn';
+    const amount = Math.max(Number($('amount').value) || 0, minBid(selected));
+    if (content.kind === 'image') return content.image ? { brand, amount, kind: 'image', image: content.image } : null;
+    const text = $('ad-text').value.trim();
+    return { brand, amount, kind: 'text', text: text || 'Din text här' };
+  }
+  function renderPreview() {
+    if (!$('preview')) return;
+    Fig.preview($('preview'), selected, draftLeader(), renderPreview);
+  }
+  ['brand', 'ad-text', 'amount'].forEach(id => $(id).addEventListener('input', renderPreview));
+
+  // Images are shrunk in the browser to at most 512 px and re-encoded, which also drops any metadata.
+  const MAX_SIDE = 512, MAX_CHARS = 380000;
+  function loadFile(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode')); };
+      img.src = url;
+    });
+  }
+  async function prepareImage(file) {
+    if (!file.type.startsWith('image/')) throw { userMessage: 'Filen är ingen bild. Välj en PNG, JPG eller WebP.' };
+    if (file.size > 25e6) throw { userMessage: 'Bilden är för stor. Välj en bild under 25 MB.' };
+    let img;
+    try { img = await loadFile(file); } catch (e) { throw { userMessage: 'Bilden kunde inte läsas. Prova att spara den som PNG eller JPG.' }; }
+    let side = MAX_SIDE;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const s = Math.min(1, side / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round((img.naturalWidth || img.width) * s)); c.height = Math.max(1, Math.round((img.naturalHeight || img.height) * s));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      for (const [type, q] of [['image/webp', 0.88], ['image/png'], ['image/jpeg', 0.85]]) {
+        const url = c.toDataURL(type, q);
+        if (url.startsWith('data:' + type) && url.length <= MAX_CHARS) return url;
+      }
+      side = Math.round(side * 0.78);
+    }
+    throw { userMessage: 'Bilden blev för stor även efter förminskning. Prova en enklare bild.' };
+  }
+  async function takeFile(file) {
+    if (!file) return;
+    $('drop-label').textContent = 'Förbereder bilden…';
+    try {
+      content.image = await prepareImage(file);
+      $('drop-thumb').src = content.image; $('drop-thumb').hidden = false;
+      $('drop-label').textContent = `${file.name.slice(0, 40)} · klicka för att byta`;
+      $('msg').textContent = ''; $('msg').className = 'msg';
+    } catch (err) {
+      content.image = null; $('drop-thumb').hidden = true;
+      $('drop-label').textContent = 'Välj en bild eller dra hit den. PNG, JPG eller WebP.';
+      say(err.userMessage || 'Bilden kunde inte användas.');
+    }
+    renderPreview();
+  }
+  $('ad-image').addEventListener('change', e => takeFile(e.target.files[0]));
+  const drop = $('drop');
+  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, () => drop.classList.remove('over')));
+  drop.addEventListener('drop', e => { e.preventDefault(); takeFile(e.dataTransfer.files[0]); });
+
   $('bid-form').addEventListener('submit', async e => {
     e.preventDefault();
     if (busy || ended() || !canWrite) return;
-    const brand = $('brand').value.trim().slice(0, 24), amount = Math.round(Number($('amount').value)), min = minBid(selected);
-    if (!brand) { say('Skriv företaget eller varumärket som ska synas på ytan.'); $('brand').focus(); return; }
+    const brand = $('brand').value.trim().slice(0, 40), amount = Math.round(Number($('amount').value)), min = minBid(selected);
+    const text = $('ad-text').value.trim().slice(0, 40);
+    if (!brand) { say('Skriv ditt namn eller företag, så att alla ser vem som köpt ytan.'); $('brand').focus(); return; }
+    if (content.kind === 'text' && !text) { say('Skriv texten som ska synas på ytan.'); $('ad-text').focus(); return; }
+    if (content.kind === 'image' && !content.image) { say('Välj en bild eller logotyp som ska synas på ytan.'); $('ad-image').focus(); return; }
     if (!Number.isFinite(amount) || amount < min) { say(`Budet måste vara minst ${kr(min)}.`); $('amount').focus(); return; }
     const sp = SPOTS.find(s => s.id === selected);
+    const ad = content.kind === 'image' ? { kind: 'image', image: content.image } : { kind: 'text', text };
     const mine = clean(bidsByUser.get(me) && bidsByUser.get(me).spots);
-    mine[sp.id] = { brand, amount, t: Date.now() };
+    mine[sp.id] = { brand, amount, t: Date.now(), ...ad };
     busy = true; renderDetail(false);
     try {
-      if (mode === 'shared') await remoteSave(sp.id, brand, amount);
+      if (mode === 'shared') await remoteSave(sp.id, brand, amount, ad);
       else { bidsByUser.set(me, { spots: mine }); store.set(LOCAL_KEY, JSON.stringify(mine)); }
       store.set(BRAND_KEY, brand);
       busy = false; render(true);
@@ -976,24 +1160,39 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
     for (const r of rows.values()) {
       const u = byUser.get(r.bidder) || { spots: {} };
       const prev = u.spots[r.spot];
-      if (!prev || r.amount > prev.amount) u.spots[r.spot] = { brand: r.brand, amount: r.amount, t: Date.parse(r.created_at) || 0 };
+      if (!prev || r.amount > prev.amount) u.spots[r.spot] = { brand: r.brand, amount: r.amount, t: Date.parse(r.created_at) || 0, id: r.id, kind: r.kind, text: r.ad_text || '' };
       byUser.set(r.bidder, u);
     }
     bidsByUser = byUser;
   }
   async function loadAll() {
-    const { data, error } = await sb.from(TABLE).select('id,spot,brand,amount,bidder,created_at').order('amount', { ascending: false }).limit(2000);
+    const { data, error } = await sb.from(TABLE).select(COLS).order('amount', { ascending: false }).limit(2000);
     if (error) throw error;
     const next = new Map(data.map(r => [r.id, r]));
     for (const [id, t] of justAdded) { if (Date.now() - t > 20000) justAdded.delete(id); else if (!next.has(id) && rows.has(id)) next.set(id, rows.get(id)); }
     rows = next; rebuild(); render(false);
   }
-  remoteSave = async (spot, brand, amount) => {
-    const { data, error } = await sb.from(TABLE).insert({ spot, brand, amount, bidder: me }).select('id,spot,brand,amount,bidder,created_at').single();
+  const COLS = 'id,spot,brand,amount,bidder,created_at,kind,ad_text';
+  const pendingImages = new Set();
+  // Only the leading bid on each spot is shown, so only those images are downloaded.
+  async function fetchLeaderImages() {
+    const want = SPOTS.map(sp => ranking(sp.id)[0]).filter(L => L && L.kind === 'image' && L.id != null && !imageById.has(L.id) && !pendingImages.has(L.id)).map(L => L.id);
+    if (!want.length || !sb) return;
+    want.forEach(id => pendingImages.add(id));
+    const { data, error } = await sb.from(TABLE).select('id,image_data').in('id', want);
+    want.forEach(id => pendingImages.delete(id));
+    if (error || !data) return;
+    for (const r of data) if (r.image_data) imageById.set(r.id, r.image_data);
+    render(false);
+  }
+  remoteSave = async (spot, brand, amount, ad) => {
+    const row = { spot, brand, amount, bidder: me, kind: ad.kind, ad_text: ad.kind === 'text' ? ad.text : null, image_data: ad.kind === 'image' ? ad.image : null };
+    const { data, error } = await sb.from(TABLE).insert(row).select(COLS).single();
     if (error) {
       loadAll().catch(() => {});
       throw { userMessage: error.code === 'P0001' ? error.message : 'Budet kunde inte sparas. Kontrollera anslutningen och försök igen.' };
     }
+    if (ad.kind === 'image') imageById.set(data.id, ad.image);
     rows.set(data.id, data); justAdded.set(data.id, Date.now()); rebuild();
   };
 
@@ -1013,7 +1212,9 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
       note.textContent = 'Budlistan svarar inte just nu. Ladda om sidan om en stund.'; note.dataset.state = 'warn';
     }
     sb.channel('reklamfiguren').on('postgres_changes', { event: 'INSERT', schema: 'public', table: TABLE }, p => {
-      rows.set(p.new.id, p.new); rebuild(); render(false);
+      const { image_data, ...r } = p.new;
+      if (image_data) imageById.set(r.id, image_data);
+      rows.set(r.id, r); rebuild(); render(false);
     }).subscribe();
     setInterval(() => { if (!document.hidden) loadAll().catch(() => {}); }, 30000);
   })();
