@@ -24,3 +24,14 @@ Så här byggs figuren om från två GLB-filer, utpackade till `mesh.json` och t
 Varje skript beskriver sina argument överst i filen.
 
 `tools/build-human.mjs`, `tools/mh/` och `vendor/makehuman/` är den tidigare, genererade figuren som byggde på [MakeHuman](https://github.com/makehumancommunity/makehuman) (CC0, se `vendor/makehuman/LICENSE.ASSETS.md`). `tools/mh/mesher.mjs` används fortfarande för skorna.
+
+## Betalning med faktura
+
+När auktionen stänger (30 november kl. 20:00) faktureras vinnarna. Ingen betalning sker på sidan.
+
+1. **Vid budet** anger budgivaren sin e-post. Den sparas i `reklamfiguren_kontakt`, som besökare inte kan läsa. Bud läggs via funktionen `reklamfiguren_lagg_bud`, så att bud och e-post sparas tillsammans.
+2. **Vid stängning** kör pg_cron Supabase-funktionen `reklamfiguren-stang` (källkod i `supabase/functions/`). Den utser vinnaren på varje yta till `reklamfiguren_vinst` och mejlar en personlig länk, `?vinst=<token>`, till fakturaformuläret.
+3. **Vinnaren** öppnar länken och fyller i namn, organisations- eller personnummer, adress och fakturamejl. Uppgifterna kan ändras tills fakturan är markerad som skickad.
+4. **Du fakturerar** från vyn `reklamfiguren_vinnare` i Supabase (SQL Editor eller Table Editor). Den visar yta, belopp, köpare, e-post, fakturauppgifter och länken. Markera `fakturerad_at` och `betald_at` i `reklamfiguren_vinst` när du skickat fakturan och fått betalt.
+
+Mejlen skickas via [Resend](https://resend.com) när Supabase-hemligheterna `RESEND_API_KEY` och `REKLAMFIGUREN_FROM` (avsändare, till exempel `Reklamfiguren <auktion@dindoman.se>`) är satta. Utan dem utses vinnarna ändå, och du kan mejla länkarna från vinnarlistan själv. Funktionen kan köras om utan risk: varje vinnare mejlas bara en gång.

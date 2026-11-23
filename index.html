@@ -251,6 +251,9 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
 .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none }
 .preview { display: grid; gap: 6px }
 .preview canvas { display: block; width: auto; height: auto; max-width: 100%; max-height: 170px; margin: 0 auto; border-radius: var(--r-md); background: #121214; border: 1px solid var(--hair) }
+
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 10px }
+.pair label { min-width: 0 }
 </style>
 </head>
 <body>
@@ -280,6 +283,10 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
       <label for="brand">Ditt namn eller företag
         <input id="brand" name="brand" maxlength="40" autocomplete="organization" placeholder="t.ex. Kaffebaren Norr" required>
         <span class="help">Visas under annonsen som den som köpt ytan.</span>
+      </label>
+      <label for="email">Din e-post
+        <input id="email" name="email" type="email" maxlength="254" autocomplete="email" inputmode="email" placeholder="namn@foretag.se" required>
+        <span class="help">Används bara för att kontakta dig om du vinner. Visas inte för andra.</span>
       </label>
       <fieldset class="content">
         <legend>Vad ska synas på ytan?</legend>
@@ -322,6 +329,48 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
   </div>
   <p class="note" id="sync-note">Ansluter till budlistan…</p>
   <p class="ends" id="st-end"></p>
+</aside>
+
+<aside class="sheet" id="win" aria-label="Fakturauppgifter" aria-hidden="true" tabindex="-1">
+  <button class="close" id="win-close" type="button" aria-label="Stäng">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+  </button>
+  <div class="detail">
+    <p class="eyebrow" id="w-meta">Reklamfiguren</p>
+    <h2 id="w-title">Hämtar din vinst…</h2>
+    <div class="price" id="w-price" hidden>
+      <span><span class="lbl">Vinnande bud</span><span class="amt" id="w-amt"></span></span>
+      <span class="chip mine">Du vann</span>
+    </div>
+    <p class="leader" id="w-intro"></p>
+    <form id="win-form" novalidate hidden>
+      <label for="w-namn">Namn eller företag
+        <input id="w-namn" name="w-namn" maxlength="100" autocomplete="organization" required>
+      </label>
+      <label for="w-orgnr">Organisations- eller personnummer
+        <input id="w-orgnr" name="w-orgnr" maxlength="16" inputmode="numeric" placeholder="556677-8899" required>
+      </label>
+      <label for="w-adress">Gatuadress
+        <input id="w-adress" name="w-adress" maxlength="120" autocomplete="street-address" required>
+      </label>
+      <div class="pair">
+        <label for="w-postnr">Postnummer
+          <input id="w-postnr" name="w-postnr" maxlength="6" inputmode="numeric" autocomplete="postal-code" placeholder="123 45" required>
+        </label>
+        <label for="w-ort">Ort
+          <input id="w-ort" name="w-ort" maxlength="60" autocomplete="address-level2" required>
+        </label>
+      </div>
+      <label for="w-referens">Er referens (valfritt)
+        <input id="w-referens" name="w-referens" maxlength="80">
+      </label>
+      <label for="w-epost">E-post för fakturan
+        <input id="w-epost" name="w-epost" type="email" maxlength="254" autocomplete="email" required>
+      </label>
+      <button class="btn-primary" id="w-submit" type="submit">Skicka fakturauppgifter</button>
+      <p class="msg" id="w-msg"></p>
+    </form>
+  </div>
 </aside>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
@@ -860,7 +909,7 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
 (() => {
   const $ = id => document.getElementById(id);
   const END = new Date('2026-11-30T20:00:00+01:00');
-  const LOCAL_KEY = 'reklamfiguren-bids', BRAND_KEY = 'reklamfiguren-brand';
+  const LOCAL_KEY = 'reklamfiguren-bids', BRAND_KEY = 'reklamfiguren-brand', EMAIL_KEY = 'reklamfiguren-email';
   const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
                   set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
 
@@ -974,12 +1023,21 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
 
   const sheet = $('sheet'), phone = matchMedia('(max-width: 700px)');
   sheet.inert = true;
+  const win = $('win');
+  win.inert = true;
   function fitFigure() {
-    if (!sheet.classList.contains('open')) return Fig.inset(0, 0);
-    if (phone.matches) Fig.inset(0, Math.min(sheet.offsetHeight * 0.42, innerHeight * 0.3));
-    else Fig.inset(Math.min((sheet.offsetWidth + 32) / 2, innerWidth * 0.22), 0);
+    const open = document.querySelector('.sheet.open');
+    if (!open) return Fig.inset(0, 0);
+    if (phone.matches) Fig.inset(0, Math.min(open.offsetHeight * 0.42, innerHeight * 0.3));
+    else Fig.inset(Math.min((open.offsetWidth + 32) / 2, innerWidth * 0.22), 0);
+  }
+  function closeWin() {
+    if (!win.classList.contains('open')) return;
+    win.classList.remove('open'); win.inert = true; win.setAttribute('aria-hidden', 'true');
+    fitFigure();
   }
   function openSheet(id) {
+    closeWin();
     const wasOpen = sheet.classList.contains('open'), changed = id !== selected;
     selected = id; Fig.select(id);
     if (changed) { $('msg').textContent = ''; $('msg').className = 'msg'; }
@@ -998,7 +1056,8 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
   }
   Fig.onPick = id => id ? openSheet(id) : closeSheet();
   $('close').addEventListener('click', closeSheet);
-  addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+  addEventListener('keydown', e => { if (e.key === 'Escape') { closeSheet(); closeWin(); } });
+  $('win-close').addEventListener('click', closeWin);
   addEventListener('resize', fitFigure);
 
   let drag = null;
@@ -1032,6 +1091,7 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
     if (!ended()) $('submit').textContent = `Lägg bud på ${kr(v > 0 ? v : minBid(selected))}`;
   });
   $('brand').value = store.get(BRAND_KEY) || '';
+  $('email').value = store.get(EMAIL_KEY) || '';
 
   function say(text, ok) { const m = $('msg'); m.textContent = text; m.className = 'msg ' + (ok ? 'ok' : 'err'); }
 
@@ -1115,7 +1175,9 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
     if (busy || ended() || !canWrite) return;
     const brand = $('brand').value.trim().slice(0, 40), amount = Math.round(Number($('amount').value)), min = minBid(selected);
     const text = $('ad-text').value.trim().slice(0, 40);
+    const email = $('email').value.trim().slice(0, 254);
     if (!brand) { say('Skriv ditt namn eller företag, så att alla ser vem som köpt ytan.'); $('brand').focus(); return; }
+    if (mode === 'shared' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { say('Skriv din e-post, så att vi kan kontakta dig om du vinner.'); $('email').focus(); return; }
     if (content.kind === 'text' && !text) { say('Skriv texten som ska synas på ytan.'); $('ad-text').focus(); return; }
     if (content.kind === 'image' && !content.image) { say('Välj en bild eller logotyp som ska synas på ytan.'); $('ad-image').focus(); return; }
     if (!Number.isFinite(amount) || amount < min) { say(`Budet måste vara minst ${kr(min)}.`); $('amount').focus(); return; }
@@ -1125,9 +1187,9 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
     mine[sp.id] = { brand, amount, t: Date.now(), ...ad };
     busy = true; renderDetail(false);
     try {
-      if (mode === 'shared') await remoteSave(sp.id, brand, amount, ad);
+      if (mode === 'shared') await remoteSave(sp.id, brand, amount, ad, email);
       else { bidsByUser.set(me, { spots: mine }); store.set(LOCAL_KEY, JSON.stringify(mine)); }
-      store.set(BRAND_KEY, brand);
+      store.set(BRAND_KEY, brand); if (email) store.set(EMAIL_KEY, email);
       busy = false; render(true);
       say(`Ditt bud på ${kr(amount)} för ${sp.name.toLowerCase()} är registrerat.`, true);
     } catch (err) {
@@ -1185,9 +1247,12 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
     for (const r of data) if (r.image_data) imageById.set(r.id, r.image_data);
     render(false);
   }
-  remoteSave = async (spot, brand, amount, ad) => {
-    const row = { spot, brand, amount, bidder: me, kind: ad.kind, ad_text: ad.kind === 'text' ? ad.text : null, image_data: ad.kind === 'image' ? ad.image : null };
-    const { data, error } = await sb.from(TABLE).insert(row).select(COLS).single();
+  remoteSave = async (spot, brand, amount, ad, email) => {
+    const { data: res, error } = await sb.rpc('reklamfiguren_lagg_bud', {
+      p_spot: spot, p_brand: brand, p_amount: amount, p_bidder: me, p_kind: ad.kind,
+      p_ad_text: ad.kind === 'text' ? ad.text : null, p_image_data: ad.kind === 'image' ? ad.image : null, p_email: email,
+    });
+    const data = res && !error ? (({ image_data, ...r }) => r)(Array.isArray(res) ? res[0] : res) : null;
     if (error) {
       loadAll().catch(() => {});
       throw { userMessage: error.code === 'P0001' ? error.message : 'Budet kunde inte sparas. Kontrollera anslutningen och försök igen.' };
@@ -1196,12 +1261,59 @@ float shoulderW(vec3 p) { return uOn * smoothstep(1.32, 1.48, p.y) * (1.0 - smoo
     rows.set(data.id, data); justAdded.set(data.id, Date.now()); rebuild();
   };
 
+  const SPOT_NAME = id => (SPOTS.find(s => s.id === id) || { name: id }).name;
+  async function openWin(token) {
+    const sayW = (t, ok) => { const m = $('w-msg'); m.textContent = t; m.className = 'msg ' + (ok ? 'ok' : 'err'); };
+    win.classList.add('open'); win.inert = false; win.setAttribute('aria-hidden', 'false');
+    $('hint').classList.add('gone');
+    requestAnimationFrame(fitFigure);
+    const { data, error } = await sb.rpc('reklamfiguren_vinst_info', { p_token: token });
+    if (error || !data) {
+      $('w-title').textContent = 'Länken fungerar inte';
+      $('w-intro').textContent = error ? 'Vi kunde inte hämta din vinst just nu. Ladda om sidan om en stund.' : 'Kontrollera att du öppnat hela länken från mejlet. Kontakta oss om det fortfarande inte fungerar.';
+      return;
+    }
+    const v = data;
+    Fig.select(v.spot); Fig.focus(v.spot);
+    $('w-meta').textContent = 'Grattis, ' + v.brand + '!';
+    $('w-title').textContent = 'Du vann ' + SPOT_NAME(v.spot).toLowerCase();
+    $('w-amt').textContent = kr(v.amount); $('w-price').hidden = false;
+    const fields = { namn: 'w-namn', orgnr: 'w-orgnr', adress: 'w-adress', postnr: 'w-postnr', ort: 'w-ort', referens: 'w-referens', faktura_epost: 'w-epost' };
+    for (const [k, id] of Object.entries(fields)) $(id).value = v[k] || (k === 'namn' ? v.brand : '');
+    const lock = msg => { $('win-form').querySelectorAll('input, button').forEach(el => { el.disabled = true; }); sayW(msg, true); };
+    $('win-form').hidden = false;
+    if (v.invoiced) {
+      $('w-intro').textContent = 'Fakturan är skickad. Kontakta oss om något behöver ändras.';
+      lock('Fakturan är skickad till ' + v.faktura_epost + '.');
+      return;
+    }
+    $('w-intro').textContent = v.submitted
+      ? 'Vi har dina fakturauppgifter. Du kan ändra dem här tills fakturan är skickad.'
+      : 'Fyll i fakturauppgifterna, så skickar vi fakturan på ' + kr(v.amount) + '. Din annons syns på figuren.';
+    if (v.submitted) $('w-submit').textContent = 'Spara ändringar';
+    $('win-form').onsubmit = async e => {
+      e.preventDefault();
+      $('w-submit').disabled = true;
+      const val = id => $(id).value.trim();
+      const { data: saved, error: err } = await sb.rpc('reklamfiguren_vinst_uppgifter', {
+        p_token: token, p_namn: val('w-namn'), p_orgnr: val('w-orgnr'), p_adress: val('w-adress'), p_postnr: val('w-postnr'),
+        p_ort: val('w-ort'), p_referens: val('w-referens'), p_faktura_epost: val('w-epost'),
+      });
+      $('w-submit').disabled = false;
+      if (err) return sayW(err.code === 'P0001' ? err.message : 'Uppgifterna kunde inte sparas. Kontrollera anslutningen och försök igen.');
+      $('w-submit').textContent = 'Spara ändringar';
+      sayW('Tack! Vi har fått dina uppgifter och skickar fakturan till ' + saved.faktura_epost + '.', true);
+    };
+  }
+
   (async () => {
     if (!window.supabase) return goLocal();
     let id = store.get('reklamfiguren-bidder');
     if (!id) { id = crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, ch => { const r = Math.random() * 16 | 0; return (ch === 'x' ? r : (r & 3 | 8)).toString(16); }); store.set('reklamfiguren-bidder', id); }
     me = id; mode = 'shared';
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
+    const winToken = new URLSearchParams(location.search).get('vinst');
+    if (winToken && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(winToken)) openWin(winToken.toLowerCase());
     const note = $('sync-note');
     note.textContent = 'Hämtar budlistan…';
     render(false);
